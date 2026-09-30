@@ -114,6 +114,11 @@ interface ToolArgsMap {
     /** The complete plan, as markdown, starting with a # heading that names it. */
     plan: string;
   } & Record<string, JsonValue>;
+  /** Use only during a debug session, once you have added instrumentation that POSTs log entries to the debug log endpoint. Pass the COMPLETE steps to reproduce the issue as an ordered list — nothing else: no prose, no context, and no notes on what to look for in the captured log entries. The user then chooses Proceed (the issue is reproduced; the captured entries come back as this tool's result) or Mark as fixed (the issue is resolved; remove the debug instrumentation while preserving the fix). Their choice comes back as this tool's result; act on it. Make this the only and final tool call in that assistant response. */
+  finish_debug: {
+    /** The complete steps to reproduce the issue, as an ordered list — nothing else. */
+    instructions: string;
+  } & Record<string, JsonValue>;
   /** Read the current session goal, including the id and revision that update_goal requires. */
   get_goal: Record<string, JsonValue>;
   /** Find files, not directories, whose paths match a glob pattern, including hidden and ignored files. Returns up to 100 paths in modification-time order; a larger result keeps the first paths and reports where the complete list was saved. */
@@ -327,6 +332,17 @@ interface ToolOutputMap {
   };
   exit_plan_mode: {
     approved: true;
+  };
+  finish_debug: {
+    verdict: "reproduced" | "fixed";
+    logs?: {
+      /** The entry timestamp as reported by the instrumentation. */
+      at?: string;
+      /** The step name the entry was captured at. */
+      step?: string;
+      /** Free-form diagnostic payload; absent when the entry carried none. */
+      data?: JsonValue;
+    }[];
   };
   get_goal: {
     goal: null;

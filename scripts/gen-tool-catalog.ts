@@ -29,6 +29,7 @@ import { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import type { ImageAttachmentLimits, ImageAttachmentRef, SaveImageAttachment, StoredImageAttachment } from '@deepseek-ai/dsh-attachment'
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import PlanModeController from '@deepseek-ai/dsh-plan-mode'
+import DebugModeController from '@deepseek-ai/dsh-debug'
 import WebRuntime from '@deepseek-ai/dsh-web'
 import * as WebSearchExa from '@deepseek-ai/dsh-web-search-exa'
 import * as WebFetchLocal from '@deepseek-ai/dsh-web-fetch-http'
@@ -281,6 +282,18 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'exit_plan_mode stays in the model-facing schema while planning is inactive so transitions add no tool-catalog churn on top of the plan-policy change. Its execute path rejects calls outside plan mode; in plan mode it presents the plan over the user-questions seam (approve / keep planning with feedback), and approval logs plan mode inactive at the step boundary.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-debug',
+    dir: 'debug-mode',
+    source: 'packages/debug/debug-mode/src/index.ts',
+    requires: ['ctx.tools', 'ctx.userQuestions (execution time)'],
+    writes: ['tool/call', 'debug/log entries appended by the loopback debug-log endpoint while the session is in debug mode', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(DebugModeController, { prompt: 'Tool catalog schema harvest.' })
+    },
+    note:
+      'finish_debug stays in the model-facing schema so the one-shot debug workflow adds no tool-catalog churn; its execute path blocks until the active UI answers Proceed or Mark-as-fixed over the user-questions seam. The user runs the reproduction, whose instrumentation POSTs entries to the loopback debug-log endpoint; on Proceed those captured entries come back as this tool call\'s result, and on Mark-as-fixed the session exits at the next accepted in-turn pre-step.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-bash',

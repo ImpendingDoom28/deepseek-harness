@@ -59,6 +59,26 @@
                     Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
 
                     When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          # Isolated per debug session; /debug activates the mode and finish_debug blocks on the review.
+          - id: debugging
+            name: cordis:group
+            group: true
+            isolate:
+              debug: true
+            config:
+              - id: debug
+                name: '@deepseek-ai/dsh-debug'
+                config:
+                  prompt: |
+                    You are in a debug session. The user reports the issue below.
+
+                    1. Examine the code and investigate the issue in the repository. After examination of the code, define 5 hypotheses for why the user is facing the issue.
+                    2. Add temporary instrumentation that proves each of the 5 hypotheses. The instrumentation POSTs the relevant state to the debug-log endpoint at {{debug_log_url}}. Mark every instrumentation line with a [debug-mode] comment so it is easy to find and remove later. The expected POST body is one log entry: `{"step": "<step-name>", "at": "<ISO-8601 timestamp>", "data": <any JSON>}` — `step` and `at` are required, `data` is optional; a single JSON object, a JSON array of entries, or NDJSON (one entry per line) are all accepted, and a `202 accepted` response confirms the capture.
+                    3. Write the steps to reproduce the issue as an ordered list — nothing else — and call finish_debug with them. Stop there; do not continue working until the user answers.
+
+                    When the user answers:
+                    - If the issue is reproduced, the captured log entries come back as this tool call's result — read them from there. The proven hypotheses should be fixed, the rejected ones should be skipped. If none of the hypotheses were proven by the data provided by the instrumentation, generate new hypotheses and change the instrumentation accordingly, if necessary. Then call finish_debug again and repeat the process until the user presses the `Mark as fixed` button.
+                    - If the user presses the `Mark as fixed` button, remove all [debug-mode] instrumentation; preserve the fix and verify it.
           - id: compaction
             name: cordis:group
             group: true

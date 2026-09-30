@@ -384,6 +384,22 @@
       }
     },
     {
+      "name": "finish_debug",
+      "description": "Use only during a debug session, once you have added instrumentation that POSTs log entries to the debug log endpoint. Pass the COMPLETE steps to reproduce the issue as an ordered list — nothing else: no prose, no context, and no notes on what to look for in the captured log entries. The user then chooses Proceed (the issue is reproduced; the captured entries come back as this tool's result) or Mark as fixed (the issue is resolved; remove the debug instrumentation while preserving the fix). Their choice comes back as this tool's result; act on it. Make this the only and final tool call in that assistant response.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "instructions": {
+            "type": "string",
+            "description": "The complete steps to reproduce the issue, as an ordered list — nothing else."
+          }
+        },
+        "required": [
+          "instructions"
+        ]
+      }
+    },
+    {
       "name": "get_goal",
       "description": "Read the current same-session goal, including its exact id/revision, objective, phase, completed continuation rounds, round limit, blocker reason when present, and whether another continuation is armed. Call this before updating a goal.",
       "parameters": {

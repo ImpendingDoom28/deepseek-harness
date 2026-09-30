@@ -1422,6 +1422,26 @@ export const IconCompactOutlineMedium = (props: IconProps) => (
   <IconCompactOutlineArtwork {...props} strokeWidth={ICON_MEDIUM_STROKE} />
 )
 
+const IconDebugOutlineArtwork = ({ size = 16, className, strokeWidth }: WeightedIconProps) => (
+  <svg width={size} height={size} className={className} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" strokeWidth={strokeWidth}>
+    <circle cx="7" cy="3.1" r="1.7" stroke="currentColor" />
+    <ellipse cx="7" cy="8.4" rx="3.2" ry="4" stroke="currentColor" />
+    <path d="M7 6V11.4" stroke="currentColor" />
+    <path d="M6.1 1.9L5.2 0.9M7.9 1.9L8.8 0.9" stroke="currentColor" strokeLinecap="round" />
+    <path d="M4 7L2.2 6M4 8.9H1.7M4 10.8L2.2 11.8M10 7L11.8 6M10 8.9H12.3M10 10.8L11.8 11.8" stroke="currentColor" strokeLinecap="round" />
+  </svg>
+)
+
+/** Regular one-pixel IconDebugOutline artwork. */
+export const IconDebugOutlineRegular = (props: IconProps) => (
+  <IconDebugOutlineArtwork {...props} strokeWidth={ICON_REGULAR_STROKE} />
+)
+
+/** Medium IconDebugOutline artwork with a 1.3px stroke. */
+export const IconDebugOutlineMedium = (props: IconProps) => (
+  <IconDebugOutlineArtwork {...props} strokeWidth={ICON_MEDIUM_STROKE} />
+)
+
 const IconShieldOutlineArtwork = ({ size = 16, className, strokeWidth }: WeightedIconProps) => (
   <svg width={size} height={size} className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" strokeWidth={strokeWidth}>
     <path d={SHIELD_OUTLINE_PATH} stroke="currentColor" strokeLinejoin="round" />

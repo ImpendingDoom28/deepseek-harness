@@ -1,9 +1,13 @@
 /**
  * `node:http` for the worker: `createServer` returns a Server whose `listen`
- * succeeds immediately without a socket, and retains the captured request
- * listener so the tunnel server can feed synthesized requests into the real
- * route table. The fake Server exposes only the members those routes read.
- * The worker entry hands {@link whenRequestListener} to the host assembly, so the
+ * succeeds immediately without a socket, and the first server to install a
+ * request listener (the webserver, which always binds before any plugin
+ * server in a worker composition) retains it so the tunnel can feed
+ * synthesized requests into the real route table. A later unrelated server
+ * (a loopback debug-log endpoint, an inspector bridge) must not steal the
+ * capture; it still gets a working fake Server, it just is not the tunnel's.
+ * The fake Server exposes only the members those routes read. The worker
+ * entry hands {@link whenRequestListener} to the host assembly, so the
  * package never reaches back into this app.
  */
 
@@ -20,8 +24,11 @@ let captured: RequestListener | undefined
 const waiting = new Set<(listener: RequestListener) => void>()
 
 /**
- * The webserver's request listener, once `[Service.init]` has installed it.
- * @returns the listener, or undefined before the webserver row activates.
+ * The webserver's request listener, once its `[Service.init]` installed it.
+ * The tunnel feeds every synthesized request to this one route table, so the
+ * first listener to bind owns the capture; a later unrelated server (for
+ * example a loopback debug-log endpoint) must not steal it.
+ * @returns the listener, or undefined before the first server installs one.
  */
 export function requestListener(): RequestListener | undefined {
   return captured
@@ -122,12 +129,14 @@ class FakeServer {
 export class ServerResponse {}
 
 /**
- * Create the fake server and retain its request listener for the tunnel.
- * @param listener - the request listener the webserver installs.
+ * Create the fake server; the first one to install a listener owns the
+ * tunnel's capture (the webserver's route table), a later unrelated server
+ * does not.
+ * @param listener - the request listener; the webserver's, when first.
  * @returns the fake Server.
  */
 export function createServer(listener?: RequestListener): FakeServer {
-  if (listener !== undefined) {
+  if (listener !== undefined && captured === undefined) {
     captured = listener
     for (const resolve of waiting) resolve(listener)
     waiting.clear()

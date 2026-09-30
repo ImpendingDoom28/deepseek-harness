@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-09-16-logged-debug-mode.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-16-logged-debug-mode.md
+/agent-note-logged-debug-mode:
+  en: 691b61c8326e9931
+  zh: cf050d5c154f7840
+/agent-note-logged-debug-mode/problem:
+  en: a2d8ff6b83eec9ec
+  zh: 3c922bd3c279a90a
+/agent-note-logged-debug-mode/decision:
+  en: 0d97c05efe3ef5db
+  zh: 0713974adb5c7d81
+/agent-note-logged-debug-mode/alternatives-considered:
+  en: 3b934882e3e43dc5
+  zh: d66ebca4e9f71756
+/agent-note-logged-debug-mode/consequences:
+  en: ee490037811359db
+  zh: dde06100e10fcd8d

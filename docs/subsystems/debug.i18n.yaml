@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for debug.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/debug.md
+/debug-mode:
+  en: 27d33ca0431c5e57
+  zh: a3453bed495010a7
+/debug-mode/logged-state-and-recovery:
+  en: c8d474e98025a870
+  zh: 92343f7d33c6986e
+/debug-mode/the-loopback-debug-log-endpoint:
+  en: 1d2d432110845998
+  zh: 3748948b49ac4a1f
+/debug-mode/pending-selections-and-the-pre-step-append:
+  en: e852267797a57836
+  zh: 63ad65956c75c516
+/debug-mode/configuration:
+  en: 249cabbcaf61066d
+  zh: 4b835fdd492ae484
+/debug-mode/the-finish-debug-tool-and-the-debug-command:
+  en: 0a3cd2e6580dda37
+  zh: 1105897c6219aada
+/debug-mode/the-service:
+  en: 45b8aa91af9b7fe8
+  zh: 79c6dde0fc1b0c31

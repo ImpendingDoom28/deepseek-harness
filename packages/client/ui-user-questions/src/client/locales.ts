@@ -33,6 +33,10 @@ export const zh = {
   'plan.approve': '同意执行',
   'plan.decline': '拒绝',
   'plan.discuss': '要求修改',
+  'debug.header': '调试待决',
+  'debug.proceed': '继续排查',
+  'debug.markFixed': '标记已修复',
+  'debug.dismiss': '去聊天里说',
 } satisfies Record<string, string>
 
 /** The question namespace key union. */
@@ -71,4 +75,8 @@ export const en = {
   'plan.approve': 'Approve',
   'plan.decline': 'Refuse',
   'plan.discuss': 'Request changes',
+  'debug.header': 'Debug review',
+  'debug.proceed': 'Proceed',
+  'debug.markFixed': 'Mark as fixed',
+  'debug.dismiss': 'Chat about it',
 } satisfies Record<QuestionKey, string>

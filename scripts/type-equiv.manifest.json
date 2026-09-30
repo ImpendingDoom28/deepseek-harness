@@ -1882,6 +1882,11 @@
       "source": "packages/interaction/permission-presets/src/types.ts"
     },
     {
+      "doc": "docs/subsystems/debug.md",
+      "symbol": "DebugModeConfig",
+      "source": "packages/debug/debug-mode/src/index.ts"
+    },
+    {
       "doc": "docs/subsystems/plan.md",
       "symbol": "PlanModeConfig",
       "source": "packages/plan/plan-mode/src/index.ts"

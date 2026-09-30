@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-09-10-one-shot-debug-mode.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-10-one-shot-debug-mode.md
+/agent-note-one-shot-debug-mode:
+  en: 9a5576c99221cf83
+  zh: 97f9d40fa5ae0b89
+/agent-note-one-shot-debug-mode/problem:
+  en: df2ab99f4bc1eee5
+  zh: 32a49635997db99d
+/agent-note-one-shot-debug-mode/decision:
+  en: b0f040c3143c8ab3
+  zh: 3175147cfebecdae
+/agent-note-one-shot-debug-mode/decision/boundary-and-model-contract:
+  en: ec4765402fc2b6e9
+  zh: 25f35309ba6f835f
+/agent-note-one-shot-debug-mode/alternatives-considered:
+  en: de1c0ddd0c655796
+  zh: 866463098e363af4
+/agent-note-one-shot-debug-mode/consequences:
+  en: 27b1099c1dec9d37
+  zh: 1fa52ec9d0e47718

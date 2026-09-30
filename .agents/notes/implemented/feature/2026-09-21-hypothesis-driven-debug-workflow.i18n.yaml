@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-09-21-hypothesis-driven-debug-workflow.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-21-hypothesis-driven-debug-workflow.md
+/agent-note-hypothesis-driven-debug-workflow:
+  en: 622f29a9953a9cf0
+  zh: 487bde3034442eac
+/agent-note-hypothesis-driven-debug-workflow/problem:
+  en: c76933bdd0e20329
+  zh: 5558efa8ba96c203
+/agent-note-hypothesis-driven-debug-workflow/decision:
+  en: cc241ef3604fab57
+  zh: 8ac5509d50592e45
+/agent-note-hypothesis-driven-debug-workflow/alternatives-considered:
+  en: 10f0516f1535fa28
+  zh: 57caa9b4427c4231
+/agent-note-hypothesis-driven-debug-workflow/consequences:
+  en: 060e005942d06af3
+  zh: 81f782fc24b7b6de

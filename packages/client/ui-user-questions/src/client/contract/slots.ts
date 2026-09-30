@@ -29,7 +29,7 @@ export type QuestionAnswer = AskUserQuestionAnswer
 type QuestionItem = AskUserQuestionItem
 
 /** One option the asker offered on a question. */
-type QuestionOption = NonNullable<QuestionItem['options']>[number]
+export type QuestionOption = NonNullable<QuestionItem['options']>[number]
 
 /* jscpd:ignore-start -- Question and Approval intentionally own independent pending-settlement lifecycles. */
 function settlePendingComposer(settle: () => void, failureMessage: string): Promise<void> {
@@ -64,6 +64,57 @@ export interface PlanReview {
   approve: QuestionOption
   /** The option that declines it; absent when the asker offered no other option. */
   decline?: QuestionOption
+}
+
+/**
+ * A request narrowed to the `debug-review` presentation intent: everything the
+ * decision card renders and answers with. `proceed` is the option that continues
+ * with the reproduction (the issue is still present), `markFixed` the option
+ * that resolves it (remove the instrumentation), and `instructions` the
+ * collection-instructions markdown body under review.
+ */
+export interface DebugReview {
+  /** The reviewed question's id, echoed in the answer. */
+  id: string
+  /** The question text, kept as the card's accessible name. */
+  question: string
+  /** The collection-instructions markdown under review. */
+  instructions: string
+  /** The option that proceeds (the issue is reproduced; continue). */
+  proceed: QuestionOption
+  /** The option that marks the issue fixed. */
+  markFixed?: QuestionOption
+}
+
+/**
+ * Narrow a request to a renderable debug review, or return undefined to leave
+ * it to the generic question flow. The same claim rule as a plan review: one
+ * decision over one debug session, answerable by two buttons — a single
+ * question that declares the intent, carries the instructions as its detail,
+ * offers the proceed label the intent names, and is a binary single choice.
+ *
+ * @param questions - the request's whole question batch.
+ * @returns The narrowed review, or undefined when the generic flow owns it.
+ */
+export function debugReviewOf(questions: readonly QuestionItem[]): DebugReview | undefined {
+  if (questions.length !== 1) return undefined
+  // Length-checked above; the index read is the narrowing tax, not a guess.
+  const question = questions[0] as QuestionItem
+  const intent = question.intent
+  if (intent?.kind !== 'debug-review' || question.detail === undefined) return undefined
+  if (question.multiSelect === true) return undefined
+  const options = question.options ?? []
+  if (options.length > 2) return undefined
+  const proceed = options.find(option => option.label === intent.approve)
+  if (proceed === undefined) return undefined
+  const markFixed = options.find(option => option.label !== intent.approve)
+  return {
+    id: question.id,
+    question: question.question,
+    instructions: question.detail,
+    proceed,
+    ...(markFixed === undefined ? {} : { markFixed }),
+  }
 }
 
 /**
@@ -225,7 +276,7 @@ export interface QuestionCardSnapshot {
  */
 export class PendingQuestion {
   /** Presentation discriminator used by Session pending-interaction consumers. */
-  readonly kind: 'question' | 'plan-review'
+  readonly kind: 'question' | 'plan-review' | 'debug-review'
   /** Render identity and request key for the Session-scoped draft store. */
   readonly key: string
   /** Agent/Session identity owning the request. */
@@ -281,7 +332,9 @@ export class PendingQuestion {
   ) {
     this.sessionId = sessionId
     this.questions = questions
-    this.kind = planReviewOf(questions) === undefined ? 'question' : 'plan-review'
+    this.kind = planReviewOf(questions) === undefined
+      ? (debugReviewOf(questions) === undefined ? 'question' : 'debug-review')
+      : 'plan-review'
     this.callId = callId
     this.review = review
     this.dismissal = callId === undefined ? 'cancel' : 'hide'
