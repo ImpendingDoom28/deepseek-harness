@@ -43,6 +43,16 @@ describe('request listener capture', () => {
     createServer()
     expect(requestListener()).toBe(listener)
   })
+
+  it('keeps the first listener when a later server installs its own', async () => {
+    // The tunnel feeds one route table — the webserver's — so a second server
+    // with a listener (a loopback debug-log endpoint, an inspector bridge) must
+    // not steal the capture.
+    const other: RequestListener = () => {}
+    createServer(other)
+    expect(requestListener()).toBe(listener)
+    expect(await whenRequestListener()).toBe(listener)
+  })
 })
 
 describe('binding', () => {
