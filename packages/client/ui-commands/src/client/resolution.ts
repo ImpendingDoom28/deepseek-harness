@@ -6,6 +6,7 @@ import { en, zh } from './locales.ts'
 const BUILTINS = {
   goal: '@deepseek-ai/dsh-command-goal',
   plan: '@deepseek-ai/dsh-plan-mode',
+  debug: '@deepseek-ai/dsh-debug',
   feedback: '@deepseek-ai/dsh-command-feedback',
   compact: '@deepseek-ai/dsh-command-compact',
   permission: '@deepseek-ai/dsh-permission-presets',

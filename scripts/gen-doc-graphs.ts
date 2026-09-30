@@ -93,6 +93,7 @@ const GROUP_ORDER = [
   'spill',
   'todo',
   'plan',
+  'debug',
   'cordis',
   'hooks',
   'session-persistence',
@@ -539,6 +540,13 @@ const SERVICE_ROLES: ServiceRole[] = [
     title: 'Plan collaboration state',
     mode: 'core',
     note: 'Folds logged plan/mode state, flushes user selections at turn boundaries, renders deployment-owned guidance, registers /plan, and keeps the plan-exit schema stable across transitions.',
+  },
+  {
+    key: 'debug',
+    pkg: 'debug',
+    title: 'Debug mode state',
+    mode: 'core',
+    note: 'Folds logged debug/mode and debug/log state, flushes user selections at turn boundaries, renders the deployment-owned debug:policy prompt section while active, listens on the loopback debug-log endpoint for instrumentation entries, registers /debug and the stable finish_debug tool, and returns the cycle log entries to the model on Proceed.',
   },
   {
     key: 'agentPresets',

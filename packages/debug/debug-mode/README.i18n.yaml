@@ -1,0 +1,85 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/debug/debug-mode/README.md
+/:
+  en: 13963fa887ffbba0
+  zh: 13963fa887ffbba0
+/deepseek-ai-dsh-debug:
+  en: cc7b3b420496b4ae
+  zh: 3c58b813ab3254fc
+/deepseek-ai-dsh-debug/summary:
+  en: 05dcb3b5249d83d1
+  zh: cb9c6f06231cab2e
+/deepseek-ai-dsh-debug/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: dbb94479b1334720
+/deepseek-ai-dsh-debug/use-this-package:
+  en: 0c7173a7ddcf26c4
+  zh: d76ff051848b1ea3
+/deepseek-ai-dsh-debug/use-this-package/when-to-choose-it:
+  en: 4d5c309d2d0446dd
+  zh: 6146e3e2fbc7ad47
+/deepseek-ai-dsh-debug/use-this-package/minimal-configuration:
+  en: 3850a0b46204613f
+  zh: bb32dc30e6bdb251
+/deepseek-ai-dsh-debug/use-this-package/the-debug-command:
+  en: 3e137db6be03259d
+  zh: 30147b365a4f0b05
+/deepseek-ai-dsh-debug/use-this-package/the-finish-debug-review:
+  en: b587636b502b2985
+  zh: bc62e0b93caada7f
+/deepseek-ai-dsh-debug/understand-the-implementation:
+  en: 9e87dd1f3c0d3579
+  zh: 06df4b0e47fd7fb1
+/deepseek-ai-dsh-debug/further-exploration:
+  en: 6cd5bf7a53ea7968
+  zh: 99c52052211cb704
+/deepseek-ai-dsh-debug/model-experience:
+  en: 215e7ba838619b7b
+  zh: 215e7ba838619b7b
+/deepseek-ai-dsh-debug/model-experience/debug-policy-system-prompt:
+  en: d78d6903ca7f31c8
+  zh: d78d6903ca7f31c8
+/deepseek-ai-dsh-debug/model-experience/debug-policy-system-prompt/what-the-model-sees:
+  en: 1caaf846edc6b6b5
+  zh: 017e4b83babfba97
+/deepseek-ai-dsh-debug/model-experience/debug-policy-system-prompt/what-the-model-sees/configuration-example:
+  en: 85ceebb0d1aae24f
+  zh: 85ceebb0d1aae24f
+/deepseek-ai-dsh-debug/model-experience/debug-policy-system-prompt/token-effect:
+  en: 74b396a60ea323eb
+  zh: feb19e63d0faecba
+/deepseek-ai-dsh-debug/model-experience/debug-policy-system-prompt/kv-cache-effect:
+  en: 3093323a984a1598
+  zh: e243e7cd3b8d7894
+/deepseek-ai-dsh-debug/model-experience/human-command:
+  en: 4d1ec2182c2ac7ec
+  zh: 4d1ec2182c2ac7ec
+/deepseek-ai-dsh-debug/model-experience/human-command/what-the-model-sees:
+  en: 49b4ab7e7f38a080
+  zh: 509ca3d171e36f08
+/deepseek-ai-dsh-debug/model-experience/human-command/token-effect:
+  en: 8b246d610623128c
+  zh: c0c479c330b56f0e
+/deepseek-ai-dsh-debug/model-experience/human-command/kv-cache-effect:
+  en: f5706f31b98de22a
+  zh: f2e79556e711b82f
+/deepseek-ai-dsh-debug/model-experience/the-finish-debug-schema-and-review-exchange:
+  en: 32bdf83ad4693945
+  zh: 32bdf83ad4693945
+/deepseek-ai-dsh-debug/model-experience/the-finish-debug-schema-and-review-exchange/what-the-model-sees:
+  en: 726e159babcb850e
+  zh: 4ba78438d27e1372
+/deepseek-ai-dsh-debug/model-experience/the-finish-debug-schema-and-review-exchange/token-effect:
+  en: a9dc2fe6ea4359c7
+  zh: ccdbb0c538752349
+/deepseek-ai-dsh-debug/model-experience/the-finish-debug-schema-and-review-exchange/kv-cache-effect:
+  en: 40b0057ece08de12
+  zh: e0bf628797687ddb
+/deepseek-ai-dsh-debug/known-limitations-and-deferred-work:
+  en: 29adfa2be1a333b2
+  zh: 8962d041a6431c84
+/deepseek-ai-dsh-debug/known-limitations-and-deferred-work/dev-note:
+  en: c797a6daf24be0f6
+  zh: 3666a5eafe11e8f8

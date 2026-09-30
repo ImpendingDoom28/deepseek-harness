@@ -21,6 +21,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-ask-user` | `ask_user_question` | `ctx.tools`, `ctx.userQuestions` | `tool/call`, `tool/result after an answer or timeout`, `late user/message` | - | ask_user_question keeps the original blocking behavior by default; set `mode: timed` to opt into a foreground timeout and pending result while the question remains answerable. In timed mode, `timeout: -1` keeps that call blocking indefinitely. |
 | `@deepseek-ai/dsh-tools` | `run_code` | `ctx.tools`, `ctx.ptcRuntime (execution time)`, `ctx.systemPrompt` | `tool/call`, `one tool/ptc-dispatch-start + tool/ptc-dispatch pair per bridged sub-call`, `tool/result` | - | Owned by the tool registry as a reserved transport outside filterable capability layers under `mode: ptc` / `mode: both` (see the PTC mode Agent Note). Under `ptc` it is the registry's only wire contribution; the other visible capabilities are declared in a generated SDK section in the loaded runtime's language, and a program calls them through bindings scheduled under the native concurrency contract (submission-ordered starts and policy; concurrency-safe bodies overlap up to `maxParallelSubCalls`) that re-enter the complete guarded tool pipeline and link each nested execution to this outer result. |
 | `@deepseek-ai/dsh-plan-mode` | `exit_plan_mode` | `ctx.tools`, `ctx.systemPrompt`, `ctx.userQuestions (execution time, opportunistic)` | `tool/call`, `plan/mode inactive on an approved review`, `tool/result` | - | exit_plan_mode stays in the model-facing schema while planning is inactive so transitions add no tool-catalog churn on top of the plan-policy change. Its execute path rejects calls outside plan mode; in plan mode it presents the plan over the user-questions seam (approve / keep planning with feedback), and approval logs plan mode inactive at the step boundary. |
+| `@deepseek-ai/dsh-debug` | `finish_debug` | `ctx.tools`, `ctx.userQuestions (execution time)` | `tool/call`, `debug/log entries appended by the loopback debug-log endpoint while the session is in debug mode`, `tool/result` | - | finish_debug stays in the model-facing schema so the one-shot debug workflow adds no tool-catalog churn; its execute path blocks until the active UI answers Proceed or Mark-as-fixed over the user-questions seam. The user runs the reproduction, whose instrumentation POSTs entries to the loopback debug-log endpoint; on Proceed those captured entries come back as this tool call's result, and on Mark-as-fixed the session exits at the next accepted in-turn pre-step. |
 | `@deepseek-ai/dsh-tool-bash` | `bash` | `ctx.tools`, `ctx.shell`, `ctx.systemPrompt`, `ctx.shellEnv`, `ctx.jobs for run_in_background and the job-backed foreground path` | `tool/call`, `tool/result` | - | The bash tool is the model-facing consumer of the bash executor seam. With a job registry composed every call registers with the generic `ctx.jobs` runtime as it starts, collected/stopped through the `job_*` tools from `@deepseek-ai/dsh-tool-jobs`; without one, or with `enableRunInBackground: false`, the tool registers a foreground-only schema without the `run_in_background` parameter. |
 | `@deepseek-ai/dsh-tool-present` | `present` | `ctx.tools`, `ctx.fs`, `ctx.sessionProjections` | `tool/call`, `deliverables/presented after a successful final result`, `tool/result` | - | Deliveries belong to the calling Session; Web ui-deliverables supplies source-file opening and cards. |
 | `@deepseek-ai/dsh-tool-pwsh` | `pwsh` | `ctx.tools`, `ctx.shell`, `ctx.systemPrompt`, `ctx.shellEnv`, `ctx.jobs for run_in_background and the job-backed foreground path` | `tool/call`, `tool/result` | - | The pwsh tool is the PowerShell-dialect consumer of the bash executor seam for Windows compositions (a PowerShell executor such as `@deepseek-ai/dsh-pwsh-local` backs `ctx.shell`); it mirrors the bash tool call-for-call minus sandbox controls — `run_in_background` runs register with the generic `ctx.jobs` runtime and are collected/stopped through the `job_*` tools, and the managed `DSH_*` environment comes from `@deepseek-ai/dsh-shell-env`. Each call runs in a fresh process (no persistent PTY session), with native `C:\...` paths and `$env:NAME` variables. |
@@ -591,6 +592,33 @@ Use only in plan mode. Present your plan for the user's review and, on approval,
 Source: [`packages/plan/plan-mode/src/index.ts`](../packages/plan/plan-mode/src/index.ts)
 
 exit_plan_mode stays in the model-facing schema while planning is inactive so transitions add no tool-catalog churn on top of the plan-policy change. Its execute path rejects calls outside plan mode; in plan mode it presents the plan over the user-questions seam (approve / keep planning with feedback), and approval logs plan mode inactive at the step boundary.
+
+<a id="deepseek-aidsh-debug"></a>
+
+## `@deepseek-ai/dsh-debug`
+
+### `finish_debug`
+
+Use only during a debug session, once you have added instrumentation that POSTs log entries to the debug log endpoint. Pass the COMPLETE steps to reproduce the issue as an ordered list — nothing else: no prose, no context, and no notes on what to look for in the captured log entries. The user then chooses Proceed (the issue is reproduced; the captured entries come back as this tool's result) or Mark as fixed (the issue is resolved; remove the debug instrumentation while preserving the fix). Their choice comes back as this tool's result; act on it. Make this the only and final tool call in that assistant response.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "instructions": {
+      "type": "string",
+      "description": "The complete steps to reproduce the issue, as an ordered list — nothing else."
+    }
+  },
+  "required": [
+    "instructions"
+  ]
+}
+```
+
+Source: [`packages/debug/debug-mode/src/index.ts`](../packages/debug/debug-mode/src/index.ts)
+
+finish_debug stays in the model-facing schema so the one-shot debug workflow adds no tool-catalog churn; its execute path blocks until the active UI answers Proceed or Mark-as-fixed over the user-questions seam. The user runs the reproduction, whose instrumentation POSTs entries to the loopback debug-log endpoint; on Proceed those captured entries come back as this tool call's result, and on Mark-as-fixed the session exits at the next accepted in-turn pre-step.
 
 <a id="deepseek-aidsh-tool-bash"></a>
 

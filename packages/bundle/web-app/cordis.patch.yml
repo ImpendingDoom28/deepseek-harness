@@ -421,6 +421,10 @@
     - id: ui-plan
       name: '@deepseek-ai/dsh-client-ui-plan'
 
+    # Debug control: the composer debug seat over the debug projection + /debug channel.
+    - id: ui-debug
+      name: '@deepseek-ai/dsh-client-ui-debug'
+
     - id: ui-user-questions
       name: '@deepseek-ai/dsh-client-ui-user-questions'
 

@@ -3,6 +3,7 @@
   - option "File" [selected]
   - option "Goal Set or view the goal for a long-running task"
   - option "Plan Enter or leave plan mode"
+  - option "Debug Enable Debug mode"
   - option "Feedback Record feedback about this session"
   - text: Commands
   - option "Compact Compact older conversation history"

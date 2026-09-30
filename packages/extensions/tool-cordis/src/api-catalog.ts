@@ -843,6 +843,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'debug',
+    summary: '`ctx.debug`: owns logged debug state, applies and narrates selected state at step start, the `debug:policy` section, the loopback debug-log endpoint, the `/debug` command, and the `finish_debug` tool.',
+    description: '`ctx.debug`: owns logged debug state, applies and narrates selected state at step start, the `debug:policy` section, the loopback debug-log endpoint, the `/debug` command, and the `finish_debug` tool. Client carriers expose the projection\'s cropped `{ active, pending, logs }` view.',
+    methods: [
+      {
+        signature: 'get(agent: Agent): { active: boolean; pending?: boolean }',
+        description: 'Read the logged debug state and any selected state awaiting the next accepted in-turn pre-step.',
+        parameters: [{ name: 'agent', description: 'The agent to read.' }],
+        returns: 'Current logged state plus a pending selection, when present.',
+      },
+      {
+        signature: 'set(agent: Agent, active: boolean): \'committed\' | \'queued\' | \'cancelled\' | \'noop\'',
+        description: 'Select whether debug mode should be active. Between turns the method appends the change immediately because no in-turn pre-step will run until another prompt starts a turn. The open-turn fold is the idle signal: agent status stays `running` through post-turn checkpointing, when no further in-turn pre-step runs. During an open turn the selection remains pending until the next accepted in-turn pre-step. Repeated selection of the current or already-pending state is a no-op.',
+        parameters: [{ name: 'agent', description: 'The agent to switch.' }, { name: 'active', description: 'Whether debug mode should be active.' }],
+        returns: 'what happened: `committed` (logged now), `queued` (awaiting the next accepted in-turn pre-step), `cancelled` (an opposite pending selection was cleared; the logged state already matches), or `noop` (already in that state).',
+      },
+    ],
+  },
+  {
     key: 'deepseekAccount',
     summary: 'Account operations; only Host consumers can obtain a request credential.',
     description: 'Account operations; only Host consumers can obtain a request credential.',
@@ -4559,7 +4578,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'AskUserQuestionIntent',
-    declaration: 'export type AskUserQuestionIntent = {\n    kind: \'plan-review\';\n    approve: string;\n    callId?: ToolCallId;\n};',
+    declaration: 'export type AskUserQuestionIntent = {\n    kind: \'plan-review\';\n    approve: string;\n    callId?: ToolCallId;\n} | {\n    kind: \'debug-review\';\n    approve: string;\n};',
   },
   {
     name: 'AskUserQuestionItem',

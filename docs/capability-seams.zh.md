@@ -159,6 +159,8 @@ flowchart LR
   svc_userQuestions["ctx.userQuestions<br/>Human question/answer seam"]
   pkg_plan_mode["plan-mode"]
   svc_planMode["ctx.planMode<br/>Plan collaboration state"]
+  pkg_debug["debug"]
+  svc_debug["ctx.debug<br/>Debug mode state"]
   pkg_agent_preset_registry["agent-preset-registry"]
   svc_agentPresets["ctx.agentPresets<br/>Per-session agent composition"]
   pkg_commands["commands"]
@@ -316,6 +318,7 @@ flowchart LR
   pkg_cordis_host_runner --> svc_dynamicCordisRunner
   pkg_credentials --> svc_credentials
   pkg_credentials_local --> svc_credentials
+  pkg_debug --> svc_debug
   pkg_deepseek_account --> svc_deepseekAccount
   pkg_deepseek_account_platform --> svc_deepseekAccount
   pkg_deepseek_llm_api_extensions --> svc_deepseekLlmApiExtensions
@@ -634,6 +637,7 @@ flowchart LR
 | `ctx.tools` | `core` | [`tools`](../packages/core/tools) | - | [`agent-loop`](../packages/core/agent-loop), [`tool-ask-user`](../packages/interaction/tool-ask-user), [`tool-bash`](../packages/shell/tool-bash), [`tool-cordis`](../packages/extensions/tool-cordis), [`tool-fs`](../packages/fs/tool-fs), [`tool-terminal`](../packages/terminal/tool-terminal), [`tool-skill`](../packages/skill/tool-skill), [`tool-subagent`](../packages/subagent/tool-subagent), [`tool-todo`](../packages/todo/tool-todo), [`tool-web`](../packages/web/tool-web) | - | 注册能力，负责 PTC mode 传输，并让调用依次经过策略前处理、单调守卫、环绕分派、策略后处理和最终结果观测。 |
 | `ctx.userQuestions` | `seam` | [`user-questions`](../packages/interaction/user-questions) | - | [`tool-ask-user`](../packages/interaction/tool-ask-user) | - | UI 前端提供当前生效的人工回答提供方；tool-ask-user 在提供方无关的 ask() promise 上暂停工具调用。 |
 | `ctx.planMode` | `core` | [`plan-mode`](../packages/plan/plan-mode) | - | - | - | 折叠已记录的计划／模式状态，在轮次边界刷新用户选择，渲染由部署方拥有的指导信息，注册 /plan，并在状态转换期间保持计划退出 schema 稳定。 |
+| `ctx.debug` | `core` | [`debug`](../packages/debug/debug-mode) | - | - | - | 折叠已记录的 debug/mode 与 debug/log 状态，在轮次边界刷新用户选择，激活期间渲染部署方拥有的 `debug:policy` 提示词段落，监听回环 debug-log 端点接收插桩条目，注册 /debug 与稳定的 finish_debug 工具，并在 Proceed 时把当前周期的日志条目返回给模型。 |
 | `ctx.agentPresets` | `core` | [`agent-preset-registry`](../packages/preset/agent-preset-registry) | - | - | - | 立即挂载 YAML 声明的 preset 版本，把 Agent 和冷读取绑定到作用域内的贡献，并保留已替换的版本，直到最后一个使用者释放它。 |
 | `ctx.commands` | `core` | [`commands`](../packages/interaction/commands) | - | - | - | 插件注册直接面向人的命令，而不会把调用发送给模型。 |
 | `ctx.sessionProjections` | `core` | [`session-projection`](../packages/session/session-projection) | - | [`api-session-controller`](../packages/api/session-controller), [`tool-todo`](../packages/todo/tool-todo), [`session-title`](../packages/session/session-title) | - | 各领域注册由状态驱动的折叠单元；主动驱动过程维护每个会话的水位状态，Session controller 提供 baseline 并推送发生变化的值。 |

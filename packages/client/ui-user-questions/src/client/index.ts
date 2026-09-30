@@ -369,7 +369,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-user-questions: dictionaries')
   const questionDraftStore = createQuestionDraftStore()
   const registerPendingInteraction = ctx.uiSession.registerPendingInteraction<PendingQuestion>(
-    pending => pending.kind === 'plan-review' ? 2 : 1,
+    pending => pending.kind === 'question' ? 1 : 2,
   )
   const cards = new QuestionCards(registerPendingInteraction)
   ctx.effect(() => () => { cards.dispose() }, 'ui-user-questions: cards')

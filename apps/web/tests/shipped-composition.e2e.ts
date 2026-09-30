@@ -480,6 +480,7 @@ const EXPECTED_TOOLS = [
   'create_goal',
   'edit',
   'exit_plan_mode',
+  'finish_debug',
   'get_goal',
   'interrupt_agent',
   'job_kill',

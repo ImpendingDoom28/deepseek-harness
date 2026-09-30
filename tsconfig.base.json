@@ -292,6 +292,7 @@
       "@deepseek-ai/dsh-client-ui-schedule": ["./packages/client/ui-schedule/src"],
       "@deepseek-ai/dsh-client-ui-schedule/client": ["./packages/client/ui-schedule/src/client/index.ts"],
       "@deepseek-ai/dsh-client-ui-plan": ["./packages/client/ui-plan/src"],
+      "@deepseek-ai/dsh-client-ui-debug": ["./packages/client/ui-debug/src"],
       "@deepseek-ai/dsh-client-ui-user-questions": ["./packages/client/ui-user-questions/src"],
       "@deepseek-ai/dsh-client-ui-trajectory": ["./packages/client/ui-trajectory/src"],
       "@deepseek-ai/dsh-client-ui-workspace": ["./packages/client/ui-workspace/src"],
@@ -338,6 +339,9 @@
       "@deepseek-ai/dsh-compaction-image-offload/projection": ["./packages/compaction/compaction-image-offload/src/projection.ts"],
       "@deepseek-ai/dsh-session-format-catalog/message-projections": ["./packages/session/session-format-catalog/src/message-projections.ts"],
       "@deepseek-ai/dsh-native-command/types": ["./packages/util/native-command/src/types.ts"],
+      // debug-mode lives under the debug/ group, so its npm name does not match its directory
+      // and the generated aliases below cannot map it; this entry stays hand-written.
+      "@deepseek-ai/dsh-debug": ["./packages/debug/debug-mode/src"],
       // BEGIN generated package aliases — pnpm run gen-tsconfig-paths
       "@deepseek-ai/dsh-acp": ["./packages/acp/acp/src"],
       "@deepseek-ai/dsh-acp-app": ["./packages/bundle/acp-app/src"],

@@ -337,6 +337,7 @@ const subsystemGroups = [
     ['permission-presets.md', '权限预设', 'Permission presets'],
     ['sandbox.md', '沙箱', 'Sandboxing'],
     ['plan.md', '计划模式', 'Plan mode'],
+    ['debug.md', '调试模式', 'Debug mode'],
     ['user-questions.md', '用户交互', 'User interaction'],
     ['commands.md', '命令', 'Human commands'],
     ['goal.md', '目标', 'Goals'],

@@ -32,18 +32,33 @@ interface AskUserQuestionOption {
  * not know a tag renders the generic flow, and the answer encoding is identical
  * either way — an intent changes presentation only, never the protocol.
  */
-type AskUserQuestionIntent = {
-  /** A plan submitted for review: `detail` is the plan markdown `ask()` requires, and the decision approves or declines it. */
-  kind: 'plan-review'
-  /**
-   * The option label that approves the plan; every other option declines it.
-   * Named rather than positional so no UI infers the verdict from option order.
-   * An `approve` naming no option of its own question is rejected at `ask()`.
-   */
-  approve: string
-  /** Logged tool invocation whose arguments contain the reviewed plan. */
-  callId?: ToolCallId
-}
+type AskUserQuestionIntent =
+  | {
+    /** A plan submitted for review: `detail` is the plan markdown `ask()` requires, and the decision approves or declines it. */
+    kind: 'plan-review'
+    /**
+     * The option label that approves the plan; every other option declines it.
+     * Named rather than positional so no UI infers the verdict from option order.
+     * An `approve` naming no option of its own question is rejected at `ask()`.
+     */
+    approve: string
+    /** Logged tool invocation whose arguments contain the reviewed plan. */
+    callId?: ToolCallId
+  }
+  | {
+    /**
+     * A debug session under review: `detail` is the steps-to-reproduce markdown (an ordered
+     * list, nothing else), and the decision is Proceed (the issue is reproduced; continue)
+     * or Mark as fixed (the issue is resolved; remove the instrumentation).
+     */
+    kind: 'debug-review'
+    /**
+     * The option label that proceeds with the reproduction (continue); the other option marks the issue fixed.
+     * Named rather than positional so no UI infers the verdict from option order.
+     * An `approve` naming no option of its own question is rejected at `ask()`.
+     */
+    approve: string
+  }
 ```
 
 ## Question item
