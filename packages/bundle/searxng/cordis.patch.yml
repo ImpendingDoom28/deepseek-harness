@@ -1,0 +1,12 @@
+# The searxng mode layer, applied after dsh-base and dsh-headless: it swaps the
+# web seam's search provider to keyless SearXNG and mounts the provider plugin.
+# A patch replaces the targeted row's whole config, so both web keys are restated.
+
+- id: web
+  config:
+    searchProvider: searxng
+    fetchProvider: http
+
+- insert:
+    - id: web-search-searxng
+      name: '@deepseek-ai/dsh-web-search-searxng'

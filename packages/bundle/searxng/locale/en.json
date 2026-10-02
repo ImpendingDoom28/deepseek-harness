@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "SearXNG search",
+    "description": "Route web searches through a locally hosted, keyless SearXNG instance instead of the built-in provider."
+  }
+}

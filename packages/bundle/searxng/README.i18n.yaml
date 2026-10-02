@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/bundle/searxng/README.md
+/:
+  en: 08c692da0f80efc3
+  zh: 2ba4e15ca1827c5d
+/deepseek-ai-dsh-searxng:
+  en: 778267d6ae562bb9
+  zh: 37c373fe2d41adb9
+/deepseek-ai-dsh-searxng/summary:
+  en: 592f6a69db617081
+  zh: 6b9485fb69815078
+/deepseek-ai-dsh-searxng/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-searxng/use-this-package:
+  en: bbff250eba0f1b89
+  zh: 0a618f05cc88ee2b
+/deepseek-ai-dsh-searxng/use-this-package/enabling-the-bundle:
+  en: a89e56748c1930d1
+  zh: f6b03823a6b336b1
+/deepseek-ai-dsh-searxng/use-this-package/pointing-at-your-instance:
+  en: e4bba2a2e708c674
+  zh: d8bf2242abac7e00
+/deepseek-ai-dsh-searxng/use-this-package/what-you-get:
+  en: f98a371068492437
+  zh: 235f4402ae1d9504
+/deepseek-ai-dsh-searxng/understand-the-implementation:
+  en: ae65dfb4e3005e91
+  zh: e30fecfe7552bc7b
+/deepseek-ai-dsh-searxng/understand-the-implementation/patch-over-the-base-web-row:
+  en: ce1d006c77faaddf
+  zh: ff2e33aaffb5d716
+/deepseek-ai-dsh-searxng/further-exploration:
+  en: 8d7066ac3761ef5f
+  zh: 23a23d2e84e9cba9
+/deepseek-ai-dsh-searxng/model-experience:
+  en: 89dc82f0131ddd4b
+  zh: fc0bd4b7e1e127ad
+/deepseek-ai-dsh-searxng/model-experience/kv-cache-effect:
+  en: 5cb316f623760297
+  zh: 8a570bb52e24e3fe
+/deepseek-ai-dsh-searxng/known-limitations-and-deferred-work:
+  en: 53463dfd20f6be92
+  zh: 0a223ed5e5b473b7
+/deepseek-ai-dsh-searxng/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: e88aeb617ffb74ea

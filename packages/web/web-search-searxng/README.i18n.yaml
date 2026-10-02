@@ -1,0 +1,82 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/web/web-search-searxng/README.md
+/:
+  en: 48e3aba895166f2c
+  zh: 95e7957149e11351
+/deepseek-ai-dsh-web-search-searxng:
+  en: bbd2343526932028
+  zh: 9c036d33c506b6a9
+/deepseek-ai-dsh-web-search-searxng/summary:
+  en: aca0dd8c1459d1da
+  zh: a94397a6a260bdfc
+/deepseek-ai-dsh-web-search-searxng/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-web-search-searxng/use-this-package:
+  en: eb3eb2a2e8614977
+  zh: 74ece8228b51a0bf
+/deepseek-ai-dsh-web-search-searxng/use-this-package/when-to-choose-it:
+  en: f2ead86c940e2c28
+  zh: e7da5c75702ef852
+/deepseek-ai-dsh-web-search-searxng/use-this-package/minimal-configuration:
+  en: 5f85a0a133806f72
+  zh: 21d6c13a87d7793c
+/deepseek-ai-dsh-web-search-searxng/use-this-package/what-a-search-returns:
+  en: d5cdb86d6c07cd9e
+  zh: 40db4c6e4cb0f46b
+/deepseek-ai-dsh-web-search-searxng/use-this-package/failures-and-recovery:
+  en: 09b37d552a3816ad
+  zh: 873b8ae9bfb1da1c
+/deepseek-ai-dsh-web-search-searxng/understand-the-implementation:
+  en: 9842c69ad3636bb3
+  zh: 3cdc3f816cbdd0cb
+/deepseek-ai-dsh-web-search-searxng/understand-the-implementation/design-philosophy:
+  en: aac94946ed86178d
+  zh: 63a448496eec56ba
+/deepseek-ai-dsh-web-search-searxng/understand-the-implementation/source-map:
+  en: 3f12f7c74b16d823
+  zh: 92723db6d140bfe2
+/deepseek-ai-dsh-web-search-searxng/understand-the-implementation/request-and-mapping-flow:
+  en: b166e43e624cf268
+  zh: 70aa8792236006ed
+/deepseek-ai-dsh-web-search-searxng/further-exploration:
+  en: 0cbb4526a0c0cab5
+  zh: 8059625976f02371
+/deepseek-ai-dsh-web-search-searxng/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-web-search-searxng/model-experience/auxiliary-searxng-request:
+  en: f7ac683ff87d317a
+  zh: ef4c1c0946c1a000
+/deepseek-ai-dsh-web-search-searxng/model-experience/auxiliary-searxng-request/what-the-model-sees:
+  en: 8225059137bea41b
+  zh: 55d0ff20836b6a56
+/deepseek-ai-dsh-web-search-searxng/model-experience/auxiliary-searxng-request/token-effect:
+  en: 84a422dfb838d666
+  zh: ad478fe510b64438
+/deepseek-ai-dsh-web-search-searxng/model-experience/auxiliary-searxng-request/kv-cache-effect:
+  en: 8cd4a151e596c150
+  zh: 4c2d8c48013113fe
+/deepseek-ai-dsh-web-search-searxng/model-experience/conversation-tool-result-indirectly:
+  en: 666f5753c99783ab
+  zh: 3933458405b5010d
+/deepseek-ai-dsh-web-search-searxng/model-experience/conversation-tool-result-indirectly/what-the-model-sees:
+  en: a34e3689e1bff108
+  zh: ee1011d738fd0094
+/deepseek-ai-dsh-web-search-searxng/model-experience/conversation-tool-result-indirectly/token-effect:
+  en: a8e2b134cbead26a
+  zh: 5bfbac9ce1e54750
+/deepseek-ai-dsh-web-search-searxng/model-experience/conversation-tool-result-indirectly/kv-cache-effect:
+  en: f5d5f97a153f7c70
+  zh: d28c6a01f9e88d7a
+/deepseek-ai-dsh-web-search-searxng/known-limitations-and-deferred-work:
+  en: 6429f74ff456cc01
+  zh: 2c7b75b7001f39c2
+/deepseek-ai-dsh-web-search-searxng/known-limitations-and-deferred-work/dev-note:
+  en: 7f775cc79dbce94b
+  zh: d07deb88190ce6c9
+/deepseek-ai-dsh-web-search-searxng/known-limitations-and-deferred-work/dev-note/future-wider-searxng-control-surface:
+  en: 24a9c9df439afc60
+  zh: 7a9d059db266f8f4
