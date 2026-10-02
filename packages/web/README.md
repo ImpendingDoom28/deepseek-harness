@@ -30,6 +30,7 @@ Six packages play the web roles; the subsystem reference owns the exhaustive voc
 | [`web-search-exa/`](web-search-exa/README.md) | Searches the web through Exa | registers on `ctx.web` |
 | [`web-search-perplexity/`](web-search-perplexity/README.md) | Searches the web through Perplexity | registers on `ctx.web` |
 | [`web-search-deepseek/`](web-search-deepseek/README.md) | Searches the web through DeepSeek native search | registers on `ctx.web` |
+| [`web-search-searxng/`](web-search-searxng/README.md) | Searches the web through a keyless, self-hosted SearXNG instance | registers on `ctx.web` |
 | [`web-fetch-http/`](web-fetch-http/README.md) | Fetches public HTTP(S) pages anonymously | registers on `ctx.web` |
 | [`tool-web/`](tool-web/README.md) | Exposes `web_search` and `web_fetch` to the model | registers on `ctx.tools` |
 

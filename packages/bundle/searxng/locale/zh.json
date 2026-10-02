@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "SearXNG 搜索",
+    "description": "网页搜索改由本地、无需 API 密钥的 SearXNG 实例提供，替代内置搜索提供方。"
+  }
+}

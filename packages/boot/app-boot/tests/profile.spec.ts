@@ -19,6 +19,7 @@ import {
   initProfile,
   loadProfile,
   loadProfileDirectory,
+  OPTIONAL_BUNDLES,
   PROFILE_COMPATIBILITY_FILENAME,
   PROFILE_PATCH_FILENAME,
   PROFILE_TEMPLATES,
@@ -351,6 +352,11 @@ describe('loadProfile', () => {
     expect(PROFILE_TEMPLATES['sdk-minimal']).toEqual({
       bundles: ['@deepseek-ai/dsh-sdk-minimal'],
     })
+    // SearXNG ships as an optional bundle, not a profile: it auto-initializes
+    // nothing but appears in the switchable-bundle list.
+    expect(() => loadProfile('t', 'searxng', anchor, home))
+      .toThrow('profile "searxng" does not exist')
+    expect(OPTIONAL_BUNDLES).toContain('@deepseek-ai/dsh-searxng')
     loadProfile('t', 'web', anchor, home)
     expect(readProfileManifest('t', resolveProfileDir('web', home)).dsh?.profile?.bundles)
       .toEqual([...PROFILE_TEMPLATES.web?.bundles ?? []])

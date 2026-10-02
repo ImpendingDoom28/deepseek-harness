@@ -4269,6 +4269,25 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-web-search-perplexity -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-web-search-searxng -->
+<a id="deepseek-aidsh-web-search-searxng"></a>
+
+## `@deepseek-ai/dsh-web-search-searxng`
+
+- `inject`: `web`
+- `source`: [`packages/web/web-search-searxng/src/index.ts:32`](../packages/web/web-search-searxng/src/index.ts)
+
+```ts config-catalog
+/** Plugin config (all optional — `apply` fills env-var and constant defaults). */
+export interface Config {
+  /** Instance base; `/search` is appended. Falls back to `$SEARXNG_BASE_URL`, then `http://localhost:8028`. */
+  baseURL?: string
+  /** Comma-separated SearXNG categories (for example `general,news`). Omitted = instance default. */
+  categories?: string
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-web-search-searxng -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-webhook-github -->
 <a id="deepseek-aidsh-webhook-github"></a>
 
@@ -4522,6 +4541,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@deepseek-ai/dsh-sdk-client` | — | [`packages/sdk/client/src/index.ts`](../packages/sdk/client/src/index.ts) |
 | `@deepseek-ai/dsh-sdk-minimal` | — | [`packages/bundle/sdk-minimal/src/index.ts`](../packages/bundle/sdk-minimal/src/index.ts) |
 | `@deepseek-ai/dsh-sdk-protocol` | — | [`packages/sdk/protocol/src/index.ts`](../packages/sdk/protocol/src/index.ts) |
+| `@deepseek-ai/dsh-searxng` | — | [`packages/bundle/searxng/src/index.ts`](../packages/bundle/searxng/src/index.ts) |
 | `@deepseek-ai/dsh-session-format` | — | [`packages/session/session-format/src/index.ts`](../packages/session/session-format/src/index.ts) |
 | `@deepseek-ai/dsh-session-format-catalog` | — | [`packages/session/session-format-catalog/src/index.ts`](../packages/session/session-format-catalog/src/index.ts) |
 | `@deepseek-ai/dsh-session-format-v0-to-v1` | — | [`packages/session/session-format-v0-to-v1/src/index.ts`](../packages/session/session-format-v0-to-v1/src/index.ts) |

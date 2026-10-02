@@ -9,7 +9,7 @@ kind: "package-group"
 
 ## 概述
 
-本组列出 `dsh --profile` 使用的可安装 patch 层。每个包都声明 `dsh.bundle.patch`；启动器会叠放这些 patch 文档来组装具名 profile。`web`、`headless`、`acp` 与 `sdk` profile 以 `dsh-base` 为基础，`sdk-minimal` 则由一个组合包提供完整配置树。领域包也可以在本目录之外声明附加层。
+本组列出 `dsh --profile` 使用的可安装 patch 层。每个包都声明 `dsh.bundle.patch`；启动器会叠放这些 patch 文档来组装具名 profile。`web`、`headless`、`acp` 与 `sdk` profile 以 `dsh-base` 为基础，`sdk-minimal` 则由一个组合包提供完整配置树。`searxng` 不是 profile 模板，而是一个可选 bundle——随箱携带、默认关闭，由插件管理器按 profile 启用——它把 `web` 缝（seam）的搜索改指向无密钥的 SearXNG。领域包也可以在本目录之外声明附加层。
 
 ## 目录
 
@@ -26,6 +26,7 @@ kind: "package-group"
 | [`acp-app`](acp-app/README.zh.md) | 基于 base、仅用于自动化的 ACP stdio 应用 | 挂载 ACP bridge |
 | [`web-app`](web-app/README.zh.md) | 基于 base 的浏览器应用层 | 挂载多条 Web 配置行 |
 | [`headless`](headless/README.zh.md) | 基于 base 的一次性命令行任务应用 | `headless-runner` |
+| [`searxng`](searxng/README.zh.md) | 可选 bundle：无密钥自托管 SearXNG web 搜索 | `web` 行改用 `searxng` 搜索提供方 |
 | [`sdk-app`](sdk-app/README.zh.md) | 基于 base 的 SDK JSON-RPC stdio 应用 | 挂载 SDK 服务器 |
 | [`sdk-minimal`](sdk-minimal/README.zh.md) | 不使用 base 或 Web 的独立极简 SDK 应用 | —（完整 patch 树） |
 

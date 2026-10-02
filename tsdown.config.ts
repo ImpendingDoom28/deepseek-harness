@@ -1,10 +1,14 @@
-import { defineConfig } from 'tsdown'
-import { typertPlugin } from './packages/typert/generator/lib/types/tsdown-plugin.js'
+import { defineConfig } from "tsdown";
+import { typertPlugin } from "./packages/typert/generator/lib/types/tsdown-plugin.js";
 
 function isBuildFaceClient(value: unknown): boolean {
-  if (value === undefined || value === 'host') return false
-  if (value === 'client') return true
-  throw new Error(`tsdown: --env.DSH_BUILD_FACE must be host or client, received ${String(value)}`)
+  if (value === undefined || value === "host") return false;
+  if (value === "client") return true;
+  throw new Error(
+    `tsdown: --env.DSH_BUILD_FACE must be host or client, received ${String(
+      value
+    )}`
+  );
 }
 
 /**
@@ -17,19 +21,21 @@ function isBuildFaceClient(value: unknown): boolean {
  * workspace members concurrently without ordering them.
  */
 export default defineConfig(({ env }) => {
-  const client = isBuildFaceClient(env?.DSH_BUILD_FACE)
+  const client = isBuildFaceClient(env?.DSH_BUILD_FACE);
   return {
     workspace: client
-      ? ['vendor/*', 'packages/*/*', 'apps/cli']
-      : ['vendor/*', 'packages/*/*', 'apps/cli', 'apps/desktop-host'],
-    entry: client ? '' : ['lib/types/{index,invariant,startup}.js'],
-    outDir: 'lib',
-    format: ['esm'],
-    platform: 'node',
-    target: 'es2024',
+      ? ["vendor/*", "packages/*/*", "apps/cli"]
+      : ["vendor/*", "packages/*/*", "apps/cli", "apps/desktop-host"],
+    entry: "",
+    outDir: "lib",
+    format: ["esm"],
+    platform: "node",
+    target: "es2024",
     fixedExtension: false,
     dts: false,
     clean: false,
-    plugins: client ? [] : [typertPlugin({ mode: 'workspace', faces: ['host'] })],
-  }
-})
+    plugins: client
+      ? []
+      : [typertPlugin({ mode: "workspace", faces: ["host"] })],
+  };
+});
