@@ -27,8 +27,8 @@ id: 2026-09-24-debug-mode-source
 baseline: false
 changes:
   - root: "event:agent/inbox/spliced"
-    previous: "2026-09-21-user-question-reply"
-    after: "614e5fa60c54a17b10e3b170d2f258ada7adf0d28635cbda76bbedd3ed19e6a6"
+    previous: "2026-10-05-working-directory-attribution"
+    after: "311167d31187079b87f5eac46a3a2eff0ece3608be99d29679db3ef0c2b62208"
     decision: same-version
   - root: "event:debug/log"
     previous: null
@@ -39,16 +39,16 @@ changes:
     after: "674427ac883664e28a9b8677d69eae812ef1cb0e476463629add37c5b079c83e"
     decision: same-version
   - root: "event:developer/message"
-    previous: "2026-09-21-user-question-reply"
-    after: "b04d1de6a265a7e0305dafa61bcf7ce510fa184f7780f5d7ec5b4df04e32a8fa"
+    previous: "2026-10-05-working-directory-attribution"
+    after: "ffebb8b7f1c1f2bc53bf7a70edc460f5c80fbd5d2aeedb7012963fa8b4556da1"
     decision: same-version
   - root: "event:session/title-llm-request"
-    previous: "2026-09-21-user-question-reply"
-    after: "5dd7b9adf3f68d2742dc4aa82f0a4d5ed38c01e7b5d3d47121b985b7b4965540"
+    previous: "2026-10-07-title-reasoning-effort"
+    after: "a55bdac0e6df59db90106eae01c5dde0d78ebfe68c4ef9392159634b7f4cea11"
     decision: same-version
   - root: "event:user/message"
-    previous: "2026-09-21-user-question-reply"
-    after: "be9148bbcb67203bd8c703bd7fb73d0c78b6293766766099741a9e34f511b544"
+    previous: "2026-10-05-working-directory-attribution"
+    after: "0c862a7fcfcbc2cbef27c1bc0b29b60bc97322d89bb12f4080e135005589a877"
     decision: same-version
 ```
 
