@@ -189,18 +189,30 @@ function reRecordTranslationPairing(wt: string): { rewritten: string[]; failed: 
   return { rewritten, failed: false }
 }
 
-/** Commit the worktree's staged state (merge or regeneration). @param wt - worktree path. @returns the commit hash, or null when clean. */
-function commitWorktree(wt: string): string | null {
+/**
+ * Commit the worktree's staged state (merge or regeneration).
+ * @param wt - worktree path.
+ * @returns the commit hash (null when clean) and the hook rejection report (null on
+ * success); a rejected commit is a semantic follow-up, not a crash.
+ */
+function commitWorktree(wt: string): { head: string | null; rejected: string | null } {
   const dirty = git(['-C', wt, 'status', '--porcelain'])
   const merging = sh(['git', '-C', wt, 'rev-parse', '--verify', 'MERGE_HEAD']).code === 0
-  if (dirty.length === 0 && !merging) return null
+  if (dirty.length === 0 && !merging) return { head: null, rejected: null }
   try {
     if (merging) git(['-C', wt, 'commit', '--no-edit'])
     else git(['-C', wt, 'commit', '-m', 'sync: regenerate artifacts from the merged upstream source'])
   } catch (error: unknown) {
-    fail(`commit failed (hook rejection?): ${(error as { stderr?: string }).stderr ?? error}`)
+    // A hook rejection leaves the staged merge in the worktree; the agent fixes the
+    // rejection reason there and re-commits. That is a semantic follow-up, not a crash.
+    const stderr = (error as { stderr?: string }).stderr ?? String(error)
+    console.error(
+      'sync-upstream: commit rejected by a hook (staged state left in the worktree for the agent to fix):\n'
+        + stderr.slice(0, 2000),
+    )
+    return { head: null, rejected: stderr }
   }
-  return git(['-C', wt, 'rev-parse', 'HEAD'])
+  return { head: git(['-C', wt, 'rev-parse', 'HEAD']), rejected: null }
 }
 
 /**
@@ -289,6 +301,13 @@ function ensureMerged(wt: string, mode: 'fresh' | 'reused'): { auto: string[]; s
 
 function main(): void {
   const root = process.cwd()
+  const merging = sh(['git', '-C', root, 'rev-parse', '--verify', 'MERGE_HEAD']).code === 0
+  const unmerged = git(['-C', root, 'ls-files', '-u'])
+  if (merging || unmerged.length > 0) {
+    fail(`main checkout at ${root} has a merge in progress or unmerged index entries; `
+      + 'finish or abort it there (git status) and rerun. The script only works in its own worktree and '
+      + 'must not run over a conflicted tree.')
+  }
   git(['fetch', 'upstream', '--prune'])
   git(['fetch', 'origin', '--prune'])
   const base = git(['merge-base', FORK, UPSTREAM])
@@ -335,7 +354,14 @@ function main(): void {
   const middle = sections.length > 0 ? `\n\n${sections.join('\n\n')}` : ''
   const body = `${header}\n\n${changelog}${middle}\n\n${footer}`
 
-  const head = commitWorktree(wt)
+  const { head, rejected } = commitWorktree(wt)
+  if (rejected !== null) {
+    const recommit = `git -C ${WORKTREE_DIR} push --force-with-lease origin ${SYNC_BRANCH}`
+    const followUp = 'sync-upstream: agent follow-up needed: the commit was rejected by a hook; fix the rejection '
+      + `reason in the worktree at ${WORKTREE_DIR}, re-commit, then run: ${recommit}`
+    console.log(followUp)
+    process.exit(2)
+  }
   if (head !== null) console.log(`sync-upstream: committed at ${head.slice(0, 12)}`)
   else console.log('sync-upstream: nothing new to commit; pushing existing branch state')
   const push = sh(['git', '-C', wt, 'push', '--force-with-lease', 'origin', SYNC_BRANCH])
