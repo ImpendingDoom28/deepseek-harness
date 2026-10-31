@@ -40,7 +40,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { UserQuestionError } from '@deepseek-ai/dsh-user-questions'
 import type { CommandDefinitionId, CommandId } from '@deepseek-ai/dsh-commands'
 import type {} from '@deepseek-ai/dsh-session-projection'
-import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
+import type { ProjectionDefinition, ProjectionHandle } from '@deepseek-ai/dsh-session-projection'
 import type { DebugLogEntry, DebugProjection, DebugUnitState } from './types.ts'
 export type * from './types.ts'
 
@@ -279,13 +279,16 @@ export const debugProjectionDefinition = {
  * projection's cropped `{ active, pending, logs }` view.
  */
 export class DebugModeController extends Service {
-  static inject = ['tools', 'systemPrompt', 'sessionProjections']
+  static inject = ['tools', 'systemPrompt', 'sessionProjections', 'agents']
 
   /** Validated deployment-owned workflow prompt. */
   private readonly prompt: string
 
   /** The loopback debug-log port, known once the service init binds the socket. */
   private port: number | undefined
+
+  /** Debug projection state reader, known once the service init registers the unit. */
+  private debugProjectionHandle: ProjectionHandle<DebugUnitState> | undefined
 
   /**
    * Latest selection per session awaiting the next accepted in-turn pre-step.
@@ -297,6 +300,11 @@ export class DebugModeController extends Service {
   constructor(ctx: Context, config: DebugModeConfig = { prompt: '' }) {
     super(ctx, 'debug')
     this.prompt = resolveConfig(config).prompt
+  }
+
+  protected async [Service.init](): Promise<void> {
+    const ctx = this.ctx
+    this.debugProjectionHandle = await ctx.sessionProjections.register(debugProjectionDefinition)
     /* jscpd:ignore-start -- logged-mode companion mirrors plan-mode's pre-step selection listener */
     let disposed = false
     // Pre-step is outside Session.append publication, so it can append the
@@ -338,8 +346,6 @@ export class DebugModeController extends Service {
       if (context.agent === undefined || this.port === undefined) return undefined
       return `http://127.0.0.1:${this.port}/debug/${context.agent.session.id}`
     })
-
-    ctx.sessionProjections.register(debugProjectionDefinition)
 
     // The command child activates only when a command registry is composed.
     ctx.inject(['commands'], (commandCtx) => {
@@ -501,11 +507,7 @@ export class DebugModeController extends Service {
         content: result.content,
       }),
     }))
-  }
 
-  /** Listen on the loopback debug-log endpoint for the service lifetime. */
-  async [Service.init](): Promise<void> {
-    const ctx = this.ctx
     const handle = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
       /* v8 ignore next -- node:http always sets url on server requests. */
       const url = new URL(req.url ?? '/', 'http://x')
@@ -656,9 +658,7 @@ export class DebugModeController extends Service {
   }
 
   private hasOpenTurn(session: Session): boolean {
-    const state = this.ctx.sessionProjections.stateOf(session, 'turnBoundary')
-    if (state === undefined) throw new Error('debug-mode requires the turnBoundary session projection')
-    return state.openTurnStartSeq !== null
+    return this.ctx.agents.turnBoundaryOf(session).openTurnStartSeq !== null
   }
 
   private loggedActiveAtLastHeader(session: Session): boolean | undefined {
@@ -666,12 +666,12 @@ export class DebugModeController extends Service {
   }
 
   /* jscpd:ignore-start -- logged-mode companion mirrors plan-mode's projection-state and selection state machine */
-  /** Read the required debug projection state or fail at the first service access. */
+  /** Read the required debug projection state or fail before the service is ready. */
   private debugState(session: Session): DebugUnitState {
-    const state = this.ctx.sessionProjections.stateOf(session, 'debug')
-    /* v8 ignore next -- the controller registers the debug projection at construction, so stateOf always returns a state. */
-    if (state === undefined) throw new Error('debug-mode requires the debug session projection')
-    return state
+    if (this.debugProjectionHandle === undefined) {
+      throw new Error('debug mode is not ready; await plugin activation before running an agent')
+    }
+    return this.debugProjectionHandle.stateOf(session)
   }
 
   /**

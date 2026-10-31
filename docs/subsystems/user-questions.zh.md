@@ -22,7 +22,7 @@ interface AskUserQuestionOption {
 
 ## 呈现意图
 
-`AskUserQuestionIntent` 可选地声明一种已知的决策类型。它以 `kind` 作为标记，以便后续加入更多意图；不认识某个标记的 UI 会渲染通用选项列表。意图只改变呈现——遵循它的 UI 回答的选项标签与通用 UI 相同，因此调用方读到的答案字段一致。`approve` 指明表示同意的选项，而不依赖选项顺序。`ask()` 拒绝两种类型无法表达的断言：`approve` 未命名该问题自己的任何选项，以及没有 `detail` 的问题声明了意图。
+`AskUserQuestionIntent` 改变呈现方式，保留选项标签和调用方的决策规则。`plan-review` 指定批准选项，并要求提供计划正文。`approval` 要求只有一个阻塞式问题，带有说明以及互不相同的拒绝、允许和可选的始终允许标签，完整对应已提供的选项，不支持多选或计时等待。CUA 前端通过现有 composer 呈现自己的固定审批；普通问答和计划审阅继续使用原有呈现。
 
 ```ts type-equiv
 /**
@@ -32,33 +32,48 @@ interface AskUserQuestionOption {
  * not know a tag renders the generic flow, and the answer encoding is identical
  * either way — an intent changes presentation only, never the protocol.
  */
-type AskUserQuestionIntent =
-  | {
-    /** A plan submitted for review: `detail` is the plan markdown `ask()` requires, and the decision approves or declines it. */
-    kind: 'plan-review'
-    /**
-     * The option label that approves the plan; every other option declines it.
-     * Named rather than positional so no UI infers the verdict from option order.
-     * An `approve` naming no option of its own question is rejected at `ask()`.
-     */
-    approve: string
-    /** Logged tool invocation whose arguments contain the reviewed plan. */
-    callId?: ToolCallId
+type AskUserQuestionIntent = {
+  /** A plan submitted for review: `detail` is the plan markdown `ask()` requires, and the decision approves or declines it. */
+  kind: 'plan-review'
+  /**
+   * The option label that approves the plan; every other option declines it.
+   * Named rather than positional so no UI infers the verdict from option order.
+   * An `approve` naming no option of its own question is rejected at `ask()`.
+   */
+  approve: string
+  /** Logged tool invocation whose arguments contain the reviewed plan. */
+  callId?: ToolCallId
+} | {
+  /** A blocking permission decision with fixed actions and no free-text answer. */
+  kind: 'approval'
+  /** Option label granting the scope described by the caller. */
+  approve: string
+  /** Option label refusing the requested access. */
+  reject: string
+  /** Optional persistent grant offered only when the caller supports it. */
+  always?: string
+  /** Metadata for human recognition; the caller admits icon sources, which the UI may load as URLs. Never an authorization identity. */
+  subject?: { name: string; icon?: string }
+  /** Localized question and limited-grant label; fixed cards own reject/always wording. Option labels remain answer values. */
+  display?: {
+    question: { en: string; [locale: string]: string }
+    detail?: { en: string; [locale: string]: string }
+    approve?: { en: string; [locale: string]: string }
   }
-  | {
-    /**
-     * A debug session under review: `detail` is the steps-to-reproduce markdown (an ordered
-     * list, nothing else), and the decision is Proceed (the issue is reproduced; continue)
-     * or Mark as fixed (the issue is resolved; remove the instrumentation).
-     */
-    kind: 'debug-review'
-    /**
-     * The option label that proceeds with the reproduction (continue); the other option marks the issue fixed.
-     * Named rather than positional so no UI infers the verdict from option order.
-     * An `approve` naming no option of its own question is rejected at `ask()`.
-     */
-    approve: string
-  }
+} | {
+  /**
+   * A debug session under review: `detail` is the steps-to-reproduce markdown (an ordered
+   * list, nothing else), and the decision is Proceed (the issue is reproduced; continue)
+   * or Mark as fixed (the issue is resolved; remove the instrumentation).
+   */
+  kind: 'debug-review'
+  /**
+   * The option label that proceeds with the reproduction (continue); the other option marks the issue fixed.
+   * Named rather than positional so no UI infers the verdict from option order.
+   * An `approve` naming no option of its own question is rejected at `ask()`.
+   */
+  approve: string
+}
 ```
 
 ## 问题条目

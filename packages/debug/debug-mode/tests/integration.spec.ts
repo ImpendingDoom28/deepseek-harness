@@ -11,10 +11,11 @@ import SessionStore, { SessionId, type SessionEvent } from '@deepseek-ai/dsh-ses
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import UserQuestionService, { type AskUserQuestionAnswer } from '@deepseek-ai/dsh-user-questions'
-import DebugModeController, { FINISH_DEBUG } from '@deepseek-ai/dsh-debug'
+import DebugModeController, { FINISH_DEBUG, debugProjectionDefinition } from '@deepseek-ai/dsh-debug'
 import { MockAdapter, toolCallResponse, textResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 
 // Mirrors the preset workflow prompt: it references the per-session loopback
@@ -48,6 +49,7 @@ async function harness(
     "- name: '@deepseek-ai/dsh-session-projection'",
     "- name: '@deepseek-ai/dsh-system-prompt'",
     "- name: '@deepseek-ai/dsh-tools'",
+    "- name: '@deepseek-ai/dsh-tool-executor-native'",
     "- name: '@deepseek-ai/dsh-agent'",
     "- name: '@deepseek-ai/dsh-agent-loop'",
     '  config:',
@@ -69,6 +71,7 @@ async function harness(
     ['@deepseek-ai/dsh-session-projection', SessionProjectionRegistry],
     ['@deepseek-ai/dsh-system-prompt', SystemPrompt],
     ['@deepseek-ai/dsh-tools', ToolRuntime],
+    ['@deepseek-ai/dsh-tool-executor-native', NativeToolExecutor],
     ['@deepseek-ai/dsh-agent', AgentRegistry],
     ['@deepseek-ai/dsh-agent-loop', AgentLoop],
     ['@deepseek-ai/dsh-user-questions', UserQuestionService],
@@ -138,11 +141,9 @@ function waitForIdle(ctx: Context, agent: Agent): Promise<void> {
   })
 }
 
-/** Read the debug unit that backs the service in this full composition. */
+/** Read the debug mode the service folds from the session log. */
 function debugActive(ctx: Context, agent: Agent): boolean {
-  const state = ctx.sessionProjections.stateOf(agent.session, 'debug')
-  if (state === undefined) throw new Error('debug projection is not registered')
-  return state.active
+  return ctx.debug.get(agent).active
 }
 
 /** Join the text blocks of one message. */
@@ -256,9 +257,10 @@ describe('debug mode through the agent loop', () => {
       // itself stays silent too).
       expect(log.filter(event => event.type === 'user/message' && event.data.source.kind === 'debug-mode')).toHaveLength(0)
       // The successful finish resets the cycle: the captured entry is not
-      // carried into the next one.
-      const state = ctx.sessionProjections.stateOf(agent.session, 'debug')
-      expect(state?.logs).toEqual([])
+      // carried into the next one. A handle registered on the same key reads
+      // the unit's raw state (the controller's own registration shares it).
+      const handle = await ctx.sessionProjections.register(debugProjectionDefinition)
+      expect(handle.stateOf(agent.session).logs).toEqual([])
     } finally {
       await ctx.fiber.dispose()
       await rm(root, { recursive: true, force: true })
