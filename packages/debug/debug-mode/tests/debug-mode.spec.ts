@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { createToolResultMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt, { type PromptAssembly } from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
+import ToolRuntime from '@deepseek-ai/dsh-tools'
+import { defineContentToolFixture } from '@deepseek-ai/dsh-tool-testkit'
 import SessionStore, { Session, SessionId, SessionSeq, type SessionEvent, type UserMessage } from '@deepseek-ai/dsh-session'
 import AgentRegistry, { agentEvents, type Agent } from '@deepseek-ai/dsh-agent'
 import { createScope } from '@deepseek-ai/dsh-scope'
@@ -11,7 +12,7 @@ import UserQuestionService, {
 } from '@deepseek-ai/dsh-user-questions'
 import CommandRuntime, { CommandId } from '@deepseek-ai/dsh-commands'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import { turnBoundaryProjectionDefinition } from '@deepseek-ai/dsh-agent-loop'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import DebugModeController, { FINISH_DEBUG, debugProjectionDefinition, resolveConfig } from '../src/index.ts'
 import type { DebugModeConfig } from '../src/index.ts'
 import type { DebugUnitState } from '../src/types.ts'
@@ -87,9 +88,18 @@ function foldDebugMode(events: readonly SessionEvent[], end = events.length): bo
   return state.active
 }
 
+/** Fold one Session's committed log into the debug unit state. */
+function foldDebugState(session: Session): DebugUnitState {
+  let state: DebugUnitState = debugProjectionDefinition.init()
+  for (const event of session.snapshotEvents()) {
+    state = debugProjectionDefinition.apply(state, event)
+  }
+  return state
+}
+
 async function mountProjectionSeam(ctx: Context): Promise<void> {
   await ctx.plugin(SessionProjectionRegistry)
-  ctx.sessionProjections.register(turnBoundaryProjectionDefinition)
+  await ctx.plugin(AgentRegistry)
 }
 
 async function setup(config: DebugModeConfig = DEBUG_CONFIG): Promise<Context> {
@@ -97,6 +107,7 @@ async function setup(config: DebugModeConfig = DEBUG_CONFIG): Promise<Context> {
   await mountProjectionSeam(ctx)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(DebugModeController, config)
   return ctx
 }
@@ -113,7 +124,7 @@ async function boundary(ctx: Context, agent: Agent & { session: Session }, type:
   const sig = new AbortController().signal
   const decision = await events.waterfall(
     'agent/pre-step',
-    { messages: [message], turn: 1, step: 1, signal: sig },
+    { modelSelection: { provider: 'mock', model: 'mock' }, messages: [message], turn: 1, step: 1, signal: sig },
     () => Promise.resolve({ kind: 'enter' as const, messages: [message] }),
   )
   if (decision.kind === 'enter') {
@@ -162,12 +173,15 @@ function registerNamedTools(ctx: Context, names: string[]): void {
 let callCounter = 0
 function execute(ctx: Context, name: string, agent?: Agent) {
   return ctx.tools.execute({
-    callId: ToolCallId(`call-${++callCounter}`),
-    name,
-    arguments: {},
+    calls: [{
+      type: 'tool-call',
+      id: ToolCallId(`call-${++callCounter}`),
+      name,
+      arguments: '{}',
+    }],
     signal: signal(),
     ...agent ? { agent } : {},
-  })
+  }).then(batch => batch.results[0]!.result)
 }
 
 /** A live store session (the command executor and the tool root off its cwd). */
@@ -183,10 +197,10 @@ async function rootAgent(ctx: Context, cwd?: string): Promise<Agent> {
 async function setupWithQuestions(answerer: QuestionAnswerer) {
   const ctx = new Context()
   await mountProjectionSeam(ctx)
-  await ctx.plugin(AgentRegistry)
   await ctx.plugin(SessionStore)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(UserQuestionService)
   registerQuestionAnswerer(ctx, answerer)
   await ctx.plugin(DebugModeController, DEBUG_CONFIG)
@@ -216,16 +230,16 @@ describe('resolveConfig', () => {
 })
 
 describe('the service', () => {
-  it('registers debug state directly but requires turnBoundary state', async () => {
+  it('rejects state reads before the service registers its projection', async () => {
     const ctx = new Context()
     await ctx.plugin(SessionProjectionRegistry)
     await ctx.plugin(SystemPrompt)
     await ctx.plugin(ToolRuntime)
-    const agent = await agentWithSession(ctx, 'missing-debug-projection-keys')
+    const agent = await agentWithSession(ctx, 'debug-before-init')
+    // Constructing the service registers it but does not run its init, so the
+    // projection handle is not yet known and the read fails loudly.
     const debugMode = new DebugModeController(ctx, DEBUG_CONFIG)
-    await new Promise(resolve => setImmediate(resolve))
-    expect(debugMode.get(agent)).toEqual({ active: false })
-    expect(() => debugMode.set(agent, true)).toThrow('debug-mode requires the turnBoundary session projection')
+    expect(() => debugMode.get(agent)).toThrow('debug mode is not ready; await plugin activation before running an agent')
   })
 
   it('reads the folded state', async () => {
@@ -445,9 +459,7 @@ describe('the log window fold', () => {
     agent.session.append('debug/mode', { active: true })
     agent.session.append('debug/log', { step: 'save', at: '2026-09-17T10:00:00.000Z' })
     agent.session.append('debug/log', { step: 'save', at: '2026-09-17T10:00:01.000Z', data: { code: 500 } })
-
-    const projection = ctx.sessionProjections
-    const state = projection.stateOf(agent.session, 'debug')
+    const state = foldDebugState(agent.session)
     expect(state).toEqual(expect.objectContaining({
       active: true,
       logs: [
@@ -463,12 +475,12 @@ describe('the log window fold', () => {
       step: 1,
       message: createToolResultMessage({ callId, content: [{ type: 'text', text: 'Issue is reproduced.' }], isError: false }),
     }, { surfaceOp: 'append', sourceEventSeqs: [callEvent.seq] })
-    expect(projection.stateOf(agent.session, 'debug')?.logs).toEqual([])
-    expect(projection.stateOf(agent.session, 'debug')?.finishDebugCallIds).toEqual([])
+    expect(foldDebugState(agent.session)?.logs).toEqual([])
+    expect(foldDebugState(agent.session)?.finishDebugCallIds).toEqual([])
 
     // A new entry after the reset starts the next cycle.
     agent.session.append('debug/log', { step: 'save', at: '2026-09-17T10:05:00.000Z' })
-    expect(projection.stateOf(agent.session, 'debug')?.logs).toEqual([
+    expect(foldDebugState(agent.session)?.logs).toEqual([
       { step: 'save', at: '2026-09-17T10:05:00.000Z' },
     ])
   })
@@ -486,7 +498,7 @@ describe('the log window fold', () => {
       message: createToolResultMessage({ callId, content: [{ type: 'text', text: 'Error: no user-questions channel' }], isError: true }),
       error: { name: 'Error', code: 'ERROR' },
     }, { surfaceOp: 'append', sourceEventSeqs: [callEvent.seq] })
-    const state = ctx.sessionProjections.stateOf(agent.session, 'debug')
+    const state = foldDebugState(agent.session)
     expect(state?.logs).toEqual([{ step: 'save', at: '2026-09-17T10:00:00.000Z' }])
     expect(state?.finishDebugCallIds).toEqual(['window-errored'])
   })
@@ -502,12 +514,12 @@ describe('the log window fold', () => {
       step: 1,
       message: createToolResultMessage({ callId: other, content: [{ type: 'text', text: 'ran read' }], isError: false }),
     }, { surfaceOp: 'append', sourceEventSeqs: [otherCall.seq] })
-    const before = ctx.sessionProjections.stateOf(agent.session, 'debug')
+    const before = foldDebugState(agent.session)
     expect(before?.finishDebugCallIds).toEqual([])
     expect(before?.logs).toHaveLength(1)
 
     agent.session.append('debug/mode', { active: false })
-    const after = ctx.sessionProjections.stateOf(agent.session, 'debug')
+    const after = foldDebugState(agent.session)
     expect(after?.logs).toEqual([])
     expect(after?.finishDebugCallIds).toEqual([])
     expect(after?.active).toBe(false)
@@ -623,10 +635,10 @@ describe('the log window fold', () => {
   it('ignores a command/run with no args (no running intent)', async () => {
     const ctx = await setup()
     const agent = await agentWithSession(ctx, 'cmd-noargs')
-    const before = ctx.sessionProjections.stateOf(agent.session, 'debug')
+    const before = foldDebugState(agent.session)
     // A command recorded without its input carries no args: it sets no intent.
     agent.session.append('command/run', { commandId: CommandId('debug'), name: 'debug', source: { kind: 'user' } })
-    const after = ctx.sessionProjections.stateOf(agent.session, 'debug')
+    const after = foldDebugState(agent.session)
     expect(after).toEqual(before)
   })
 
@@ -638,7 +650,7 @@ describe('the log window fold', () => {
     agent.session.append('tool/call', { turn: 1, step: 1, callId, name: FINISH_DEBUG, arguments: '{}' })
     // A duplicate call with the same id is ignored (recorded once, not twice).
     agent.session.append('tool/call', { turn: 1, step: 1, callId, name: FINISH_DEBUG, arguments: '{}' })
-    expect(ctx.sessionProjections.stateOf(agent.session, 'debug')?.finishDebugCallIds).toEqual(['dup-call'])
+    expect(foldDebugState(agent.session)?.finishDebugCallIds).toEqual(['dup-call'])
     // A non-finish call is not recorded.
     const other = agent.session.append('tool/call', { turn: 1, step: 1, callId: ToolCallId('other'), name: 'read', arguments: '{}' })
     agent.session.append('tool/result', {
@@ -646,7 +658,7 @@ describe('the log window fold', () => {
       step: 1,
       message: createToolResultMessage({ callId: ToolCallId('other'), content: [{ type: 'text', text: 'read ran' }], isError: false }),
     }, { surfaceOp: 'append', sourceEventSeqs: [other.seq] })
-    expect(ctx.sessionProjections.stateOf(agent.session, 'debug')?.finishDebugCallIds).toEqual(['dup-call'])
+    expect(foldDebugState(agent.session)?.finishDebugCallIds).toEqual(['dup-call'])
   })
 
   it('exposes the cropped debug wire view through a projection snapshot', async () => {
@@ -701,25 +713,22 @@ describe('the soft layer', () => {
     expect(assembly.sections.find(section => section.name === 'debug:policy')?.text).toBe(TEST_PROMPT)
   })
 
-  it('leaves foreign assemble additions alone (no assemble-layer filtering)', async () => {
-    // Debug guidance does not filter the registry or later assembly additions.
+  it('leaves foreign tool providers unfiltered', async () => {
+    // Debug guidance does not filter tools contributed by other providers.
     const ctx = new Context()
     await ctx.plugin(SystemPrompt)
     await ctx.plugin(ToolRuntime)
+    await ctx.plugin(NativeToolExecutor)
     await mountProjectionSeam(ctx)
-    ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
-      const final = await next()
-      final.tools = [...final.tools, { name: 'added-later', description: 'added after next()', parameters: {} }]
-      return final
-    })
+    ctx.systemPrompt.tools(() => ({ schemas: [{ name: 'added-later', description: 'a foreign provider tool', parameters: {} }] }))
     await ctx.plugin(DebugModeController, DEBUG_CONFIG)
     registerNamedTools(ctx, ['read'])
     const debugging = await agentWithSession(ctx, 'debugging', { active: true })
-    expect((await assembleFor(ctx, debugging)).tools.map(tool => tool.name))
-      .toEqual([FINISH_DEBUG, 'read', 'added-later'])
+    expect((await assembleFor(ctx, debugging)).tools.map(tool => tool.name).sort())
+      .toEqual([FINISH_DEBUG, 'added-later', 'read'].sort())
     const defaulted = await agentWithSession(ctx, 'defaulted')
-    expect((await assembleFor(ctx, defaulted)).tools.map(tool => tool.name))
-      .toEqual([FINISH_DEBUG, 'read', 'added-later'])
+    expect((await assembleFor(ctx, defaulted)).tools.map(tool => tool.name).sort())
+      .toEqual([FINISH_DEBUG, 'added-later', 'read'].sort())
   })
 })
 
@@ -874,7 +883,6 @@ describe('/debug', () => {
 describe('the debug-log endpoint', () => {
   async function endpointCtx() {
     const ctx = await setup()
-    await ctx.plugin(AgentRegistry)
     await ctx.plugin(SessionStore)
     return ctx
   }
@@ -920,7 +928,7 @@ describe('the debug-log endpoint', () => {
     const noEntries = await fetch(url, { method: 'POST', body: '[]' })
     expect(noEntries.status).toBe(202)
 
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toEqual([
+    expect(foldDebugState(session)?.logs).toEqual([
       { step: 'save', at: '2026-09-17T10:00:00.000Z', data: { code: 500 } },
       { step: 'open', at: '2026-09-17T10:00:01.000Z' },
       { step: 'save', at: '2026-09-17T10:00:02.000Z', data: null },
@@ -949,7 +957,7 @@ describe('the debug-log endpoint', () => {
       const response = await fetch(url, { method: 'POST', body })
       expect(response.status).toBe(400)
     }
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toEqual([])
+    expect(foldDebugState(session)?.logs).toEqual([])
   })
 
   it('rejects unknown sessions and inactive sessions with 404', async () => {
@@ -987,7 +995,7 @@ describe('the debug-log endpoint', () => {
       body: JSON.stringify({ step: 'save', at: '2026-09-17T10:00:00.000Z' }),
     })
     expect(otherPath.status).toBe(404)
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toEqual([])
+    expect(foldDebugState(session)?.logs).toEqual([])
   })
 
   it('rejects bodies over the one megabyte cap with 413', async () => {
@@ -1001,7 +1009,7 @@ describe('the debug-log endpoint', () => {
       body: JSON.stringify({ step: 'save', at: '2026-09-17T10:00:00.000Z', data: 'x'.repeat(1024 * 1024) }),
     })
     expect(oversized.status).toBe(413)
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toEqual([])
+    expect(foldDebugState(session)?.logs).toEqual([])
   })
 
   it('rejects a batch over the entry cap with 429 and accepts one that fits', async () => {
@@ -1017,7 +1025,7 @@ describe('the debug-log endpoint', () => {
         ({ step: 'st', at: '2026-09-17T10:00:00.000Z', data: { v: index } }))),
     })
     expect(tooMany.status).toBe(429)
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toEqual([])
+    expect(foldDebugState(session)?.logs).toEqual([])
 
     const fits = await fetch(url, {
       method: 'POST',
@@ -1025,7 +1033,7 @@ describe('the debug-log endpoint', () => {
         ({ step: 'st', at: '2026-09-17T10:00:00.000Z', data: { v: index } }))),
     })
     expect(fits.status).toBe(202)
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toHaveLength(4000)
+    expect(foldDebugState(session)?.logs).toHaveLength(4000)
   })
 
   it('rejects a batch over the character budget with 429', async () => {
@@ -1042,7 +1050,7 @@ describe('the debug-log endpoint', () => {
         () => ({ step: 'st', at: '2026-09-17T10:00:00.000Z', data: { pad: 'x'.repeat(650) } }))),
     })
     expect(tooLong.status).toBe(429)
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toEqual([])
+    expect(foldDebugState(session)?.logs).toEqual([])
 
     const fits = await fetch(url, {
       method: 'POST',
@@ -1050,7 +1058,7 @@ describe('the debug-log endpoint', () => {
         () => ({ step: 'st', at: '2026-09-17T10:00:00.000Z', data: { pad: 'x'.repeat(650) } }))),
     })
     expect(fits.status).toBe(202)
-    expect(ctx.sessionProjections.stateOf(session, 'debug')?.logs).toHaveLength(386)
+    expect(foldDebugState(session)?.logs).toHaveLength(386)
   })
 
   it('closes the listener when the plugin fiber is disposed', async () => {
@@ -1058,7 +1066,7 @@ describe('the debug-log endpoint', () => {
     await mountProjectionSeam(ctx)
     await ctx.plugin(SystemPrompt)
     await ctx.plugin(ToolRuntime)
-    await ctx.plugin(AgentRegistry)
+    await ctx.plugin(NativeToolExecutor)
     await ctx.plugin(SessionStore)
     const fiber = await ctx.plugin(DebugModeController, DEBUG_CONFIG)
     const session = ctx.sessions.create(SessionId('endpoint-dispose'))
@@ -1085,9 +1093,14 @@ describe('finish_debug tool', () => {
       text: 'Error: invalid arguments: missing required property "instructions"',
     }])
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-nochan'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-nochan'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     // No user-questions channel: the review cannot be presented.
     expect(result.isError).toBe(true)
     expect(result.content).toEqual([{
@@ -1102,9 +1115,13 @@ describe('finish_debug tool', () => {
     // No calling agent: the review cannot be routed, so it fails before any
     // side effect (no session to act on, no interaction to open).
     const noAgent = await ctx.tools.execute({
-      callId: ToolCallId('d-noagent'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(),
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-noagent'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+    }).then(batch => batch.results[0]!.result)
     expect(noAgent.isError).toBe(true)
     expect(noAgent.content).toEqual([{
       type: 'text',
@@ -1112,9 +1129,14 @@ describe('finish_debug tool', () => {
     }])
     // Blank instructions: the schema admits the string, the tool rejects it.
     const blank = await ctx.tools.execute({
-      callId: ToolCallId('d-blank'), name: FINISH_DEBUG,
-      arguments: { instructions: '   ' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-blank'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: '   ' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(blank.isError).toBe(true)
     expect(blank.content).toEqual([{
       type: 'text',
@@ -1131,9 +1153,14 @@ describe('finish_debug tool', () => {
     const agent = await rootAgent(ctx)
     agent.session.append('debug/mode', { active: true })
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-nomatch'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-nomatch'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     // An answer that never names the debug review carries no verdict: it is a
@@ -1149,10 +1176,10 @@ describe('finish_debug tool', () => {
     const suspendedAnswer = new Promise<AskUserQuestionAnswer>((resolve) => { resolveAnswer = resolve })
     const ctx = new Context()
     await mountProjectionSeam(ctx)
-    await ctx.plugin(AgentRegistry)
     await ctx.plugin(SessionStore)
     await ctx.plugin(SystemPrompt)
     await ctx.plugin(ToolRuntime)
+    await ctx.plugin(NativeToolExecutor)
     await ctx.plugin(UserQuestionService)
     registerQuestionAnswerer(ctx, { ask: () => { resolveAsked(); return suspendedAnswer } })
     const fiber = await ctx.plugin(DebugModeController, DEBUG_CONFIG)
@@ -1160,9 +1187,14 @@ describe('finish_debug tool', () => {
     agent.session.append('debug/mode', { active: true })
 
     const pending = ctx.tools.execute({
-      callId: ToolCallId('d-reload'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-reload'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     // The reload (fiber dispose) lands while the review is still open, so the
     // verdict the user returns can no longer be trusted.
     await asked
@@ -1212,9 +1244,14 @@ describe('finish_debug tool', () => {
     expect(posted.status).toBe(202)
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-present'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app and save a settings profile.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-present'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app and save a settings profile.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     expect(result.value).toEqual({
@@ -1229,9 +1266,9 @@ describe('finish_debug tool', () => {
     // Proceed keeps the session in debug mode (the single mode event is the
     // entry). The loop appends the tool/result after the tool returns; that
     // event resets the captured cycle so the next finish_debug starts clean.
-    expect(ctx.sessionProjections.stateOf(agent.session, 'debug')?.active).toBe(true)
+    expect(foldDebugState(agent.session)?.active).toBe(true)
     expect(agent.session.snapshotEvents().filter(event => event.type === 'debug/mode')).toHaveLength(1)
-    expect(ctx.sessionProjections.stateOf(agent.session, 'debug')?.logs).toEqual([
+    expect(foldDebugState(agent.session)?.logs).toEqual([
       { step: 'save', at: '2026-09-17T10:00:00.000Z', data: { code: 500 } },
     ])
     const callEvent = agent.session.append('tool/call', { turn: 1, step: 1, callId: ToolCallId('d-present'), name: FINISH_DEBUG, arguments: '{}' })
@@ -1240,7 +1277,7 @@ describe('finish_debug tool', () => {
       step: 1,
       message: createToolResultMessage({ callId: ToolCallId('d-present'), content: result.content, isError: false }),
     }, { surfaceOp: 'append', sourceEventSeqs: [callEvent.seq] })
-    expect(ctx.sessionProjections.stateOf(agent.session, 'debug')?.logs).toEqual([])
+    expect(foldDebugState(agent.session)?.logs).toEqual([])
   })
 
   it('returns a Proceed result without logs when nothing was captured', async () => {
@@ -1253,9 +1290,14 @@ describe('finish_debug tool', () => {
     agent.session.append('debug/mode', { active: true })
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-absent'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-absent'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     expect(result.value).toEqual({ verdict: 'reproduced' })
@@ -1276,9 +1318,14 @@ describe('finish_debug tool', () => {
     agent.session.append('debug/log', { step: 'open', at: '2026-09-17T10:00:00.000Z' })
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-nodata'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-nodata'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     expect(result.content).toEqual([{
@@ -1306,9 +1353,14 @@ describe('finish_debug tool', () => {
     await fetch(url, { method: 'POST', body: JSON.stringify({ step: 'save', at: '2026-09-17T10:00:00.000Z' }) })
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-fixed'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app and save a settings profile.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-fixed'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app and save a settings profile.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     expect(result.value).toEqual({ verdict: 'fixed' })
@@ -1336,9 +1388,14 @@ describe('finish_debug tool', () => {
     agent.session.append('debug/mode', { active: true })
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-custom'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-custom'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     // A custom answer is a "not a clean mark-fixed" — proceed, and the mode
@@ -1357,9 +1414,14 @@ describe('finish_debug tool', () => {
     agent.session.append('debug/mode', { active: true })
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-dismiss'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-dismiss'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(true)
     expect(result.content).toEqual([{
       type: 'text',
@@ -1377,9 +1439,14 @@ describe('finish_debug tool', () => {
     agent.session.append('debug/mode', { active: true })
 
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-abort'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-abort'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(true)
     expect(result.content).toEqual([{
       type: 'text',
@@ -1398,9 +1465,14 @@ describe('finish_debug tool', () => {
     const agent = await rootAgent(ctx)
     agent.session.append('debug/mode', { active: true })
     const result = await ctx.tools.execute({
-      callId: ToolCallId('d-nofs'), name: FINISH_DEBUG,
-      arguments: { instructions: 'Run the app.' }, signal: signal(), agent,
-    })
+      calls: [{
+        type: 'tool-call',
+        id: ToolCallId('d-nofs'), name: FINISH_DEBUG,
+        arguments: JSON.stringify({ instructions: 'Run the app.' }),
+      }],
+      signal: signal(),
+      agent,
+    }).then(batch => batch.results[0]!.result)
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected finish_debug success')
     expect(result.value).toEqual({ verdict: 'reproduced' })
