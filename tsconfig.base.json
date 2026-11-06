@@ -344,6 +344,7 @@
       "@deepseek-ai/dsh-client-ui-schedule": ["./packages/client/ui-schedule/src"],
       "@deepseek-ai/dsh-client-ui-schedule/client": ["./packages/client/ui-schedule/src/client/index.ts"],
       "@deepseek-ai/dsh-client-ui-plan": ["./packages/client/ui-plan/src"],
+      "@deepseek-ai/dsh-client-ui-debug": ["./packages/client/ui-debug/src"],
       "@deepseek-ai/dsh-client-ui-user-questions": ["./packages/client/ui-user-questions/src"],
       "@deepseek-ai/dsh-client-ui-trajectory": ["./packages/client/ui-trajectory/src"],
       "@deepseek-ai/dsh-client-ui-trajectory/types": ["./packages/client/ui-trajectory/src/types.ts"],
@@ -414,6 +415,9 @@
       "@deepseek-ai/dsh-native-command/types": ["./packages/util/native-command/src/types.ts"],
       "@deepseek-ai/dsh-message-quotes/client": ["./packages/session/message-quotes/src/client/index.ts"],
       "@deepseek-ai/dsh-ptc-runtime-node/configuration": ["./packages/ptc-runtime/ptc-runtime-node/src/configuration.ts"],
+      // debug-mode lives under the debug/ group, so its npm name does not match its directory
+      // and the generated aliases below cannot map it; this entry stays hand-written.
+      "@deepseek-ai/dsh-debug": ["./packages/debug/debug-mode/src"],
       // BEGIN generated package aliases — pnpm run gen-tsconfig-paths
       "@deepseek-ai/dsh-acp": ["./packages/acp/acp/src"],
       "@deepseek-ai/dsh-acp-app": ["./packages/bundle/acp-app/src"],
@@ -516,6 +520,7 @@
       "@deepseek-ai/dsh-scope": ["./packages/core/scope/src"],
       "@deepseek-ai/dsh-sdk-app": ["./packages/bundle/sdk-app/src"],
       "@deepseek-ai/dsh-sdk-minimal": ["./packages/bundle/sdk-minimal/src"],
+      "@deepseek-ai/dsh-searxng": ["./packages/bundle/searxng/src"],
       "@deepseek-ai/dsh-session": ["./packages/core/session/src"],
       "@deepseek-ai/dsh-session-checkpoint-policy": ["./packages/session/session-checkpoint-policy/src"],
       "@deepseek-ai/dsh-session-format": ["./packages/session/session-format/src"],
@@ -608,6 +613,7 @@
       "@deepseek-ai/dsh-web-deepseek-api": ["./packages/web/web-deepseek-api/src"],
       "@deepseek-ai/dsh-web-fetch-http": ["./packages/web/web-fetch-http/src"],
       "@deepseek-ai/dsh-web-search-deepseek": ["./packages/web/web-search-deepseek/src"],
+      "@deepseek-ai/dsh-web-search-searxng": ["./packages/web/web-search-searxng/src"],
       "@deepseek-ai/dsh-webhook": ["./packages/experimental/webhook/src"],
       "@deepseek-ai/dsh-webhook-github": ["./packages/experimental/webhook-github/src"],
       "@deepseek-ai/dsh-win32-process": ["./packages/subprocess/win32-process/src"],
