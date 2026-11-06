@@ -2,8 +2,8 @@
 import type { ComponentType } from 'react'
 import type { InputTriggerCandidate } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 import {
-  IconCompactOutlineRegular, IconDebugOutlineRegular, IconDownloadOutlineRegular, IconGoalOutlineRegular,
-  IconPaperPlaneOutlineRegular, IconPlanOutlineRegular,
+  IconCompactOutlineRegular, IconDownloadOutlineRegular,
+  IconGoalOutlineRegular, IconPaperPlaneOutlineRegular, IconPlanOutlineRegular,
   PermissionIconFullAccessRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { IconProps } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -17,7 +17,7 @@ export type MenuSection = 'add' | 'commands'
 
 /** Row names per section, highest usage first; rows outside both lists close the Commands section in catalog order. */
 const SECTION_ROWS: Readonly<Record<MenuSection, readonly string[]>> = {
-  add: ['file', 'goal', 'plan', 'debug', 'feedback'],
+  add: ['file', 'goal', 'plan', 'feedback'],
   commands: ['compact', 'permission', 'model', 'export'],
 }
 
@@ -41,7 +41,6 @@ function hostFace(name: BuiltinCommandName, icon: ComponentType<IconProps>): rea
 const HOST_FACES: ReadonlyMap<BuiltinCommandName, HostFace> = new Map([
   hostFace('goal', IconGoalOutlineRegular),
   hostFace('plan', IconPlanOutlineRegular),
-  hostFace('debug', IconDebugOutlineRegular),
   hostFace('feedback', IconPaperPlaneOutlineRegular),
   hostFace('compact', IconCompactOutlineRegular),
   hostFace('permission', PermissionIconFullAccessRegular),
