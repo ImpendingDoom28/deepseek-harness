@@ -65,7 +65,7 @@ async function agentWithSession(
   if (agents === undefined) {
     ctx.emit('agent/created', { agent, source: 'startup' })
   } else {
-    agents.enter(agent, undefined)
+    agents.enter(agent)
     agents.announce(agent, 'startup')
   }
   return agent
@@ -190,7 +190,7 @@ async function rootAgent(ctx: Context, cwd?: string): Promise<Agent> {
     ? ctx.sessions.create(SessionId('agent-dbg'))
     : ctx.sessions.create(SessionId('agent-dbg'), { meta: { cwd } })
   const agent = { id: session.id, session, options: {} } as Agent
-  ctx.agents.enter(agent, undefined)
+  ctx.agents.enter(agent)
   return agent
 }
 
@@ -897,7 +897,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-bodies')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/debug\/endpoint-bodies$/)
 
@@ -941,7 +941,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-malformed')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     for (const body of [
       'not json',
@@ -964,7 +964,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-inactive')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
 
     const unknown = await fetch(url.replace(/debug\/[^/]+$/, 'debug/no-such-session'), {
@@ -985,7 +985,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-notfound')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
 
     const get = await fetch(url, { method: 'GET' })
@@ -1002,7 +1002,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-oversize')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     const oversized = await fetch(url, {
       method: 'POST',
@@ -1016,7 +1016,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-full')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     // 4,001 entries exceed the 4,000-entry cap; 4,000 fit.
     const tooMany = await fetch(url, {
@@ -1040,7 +1040,7 @@ describe('the debug-log endpoint', () => {
     const ctx = await endpointCtx()
     const session = activeSession(ctx, 'endpoint-chars')
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     // Each entry costs 2 (step) + 660 (data) = 662 characters; 387 entries
     // exceed the 256,000-character budget, 386 fit.
@@ -1072,7 +1072,7 @@ describe('the debug-log endpoint', () => {
     const session = ctx.sessions.create(SessionId('endpoint-dispose'))
     session.append('debug/mode', { active: true })
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     const accepted = await fetch(url, { method: 'POST', body: JSON.stringify({ step: 'save', at: '2026-09-17T10:00:00.000Z' }) })
     expect(accepted.status).toBe(202)
@@ -1234,7 +1234,7 @@ describe('finish_debug tool', () => {
     const session = ctx.sessions.create(SessionId('agent-dbg-present'))
     session.append('debug/mode', { active: true })
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/debug\/agent-dbg-present$/)
     const posted = await fetch(url, {
@@ -1348,7 +1348,7 @@ describe('finish_debug tool', () => {
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
     const agent = { id: session.id, session, options: {} } as Agent
-    ctx.agents.enter(agent, undefined)
+    ctx.agents.enter(agent)
     const url = await debugLogUrl(ctx, agent)
     await fetch(url, { method: 'POST', body: JSON.stringify({ step: 'save', at: '2026-09-17T10:00:00.000Z' }) })
 
