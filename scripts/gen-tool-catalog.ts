@@ -319,9 +319,12 @@ const TOOL_PACKAGES: ToolPackage[] = [
     pkg: '@deepseek-ai/dsh-debug',
     dir: 'debug-mode',
     source: 'packages/debug/debug-mode/src/index.ts',
-    requires: ['ctx.tools', 'ctx.userQuestions (execution time)'],
+    requires: ['ctx.tools', 'ctx.agents', 'ctx.userQuestions (execution time)'],
     writes: ['tool/call', 'debug/log entries appended by the loopback debug-log endpoint while the session is in debug mode', 'tool/result'],
     async mount(ctx) {
+      // The controller injects the agent registry for its in-turn pre-step
+      // listener, which the schema harvest never fires.
+      await ctx.plugin(AgentRegistry)
       await ctx.plugin(DebugModeController, { prompt: 'Tool catalog schema harvest.' })
     },
     note:
