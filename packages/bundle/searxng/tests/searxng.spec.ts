@@ -10,8 +10,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import * as yaml from 'js-yaml'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { parseEntryYaml } from '@deepseek-ai/cordis-plugin-include'
 import { composeEntries, loadProfile } from '@deepseek-ai/dsh-app-boot'
 
 const installAnchor = fileURLToPath(new URL('../../../../apps/cli/package.json', import.meta.url))
@@ -25,9 +24,7 @@ describe('dsh-searxng bundle', () => {
       dsh?: { bundle?: { patch?: string } }
     }
     expect(manifest.dsh?.bundle?.patch).toBe('./cordis.patch.yml')
-    const parsed = yaml.load(readFileSync(resolve(root, manifest.dsh!.bundle!.patch!), 'utf8'), {
-      schema: entryListSchema,
-    })
+    const parsed = parseEntryYaml(readFileSync(resolve(root, manifest.dsh!.bundle!.patch!), 'utf8'))
     expect(Array.isArray(parsed)).toBe(true)
     const webRow = (parsed as { id?: string; config?: Record<string, unknown> }[]).find(row => row.id === 'web')
     expect(webRow?.config).toEqual({ searchProvider: 'searxng', fetchProvider: 'http' })
